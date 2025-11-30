@@ -1,1 +1,27 @@
+/* Load full Tailwind via Vite plugin */
 @import "tailwindcss";
+
+/* Optional: Scrollbar halus */
+::-webkit-scrollbar {
+  width: 6px;
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(0,0,0,0.25);
+  border-radius: 20px;
+}
+
+/* Canvas UX */
+canvas {
+  user-select: none;
+  touch-action: none;
+}
+
+/* Optional fade animation */
+.fade-in {
+  animation: fadein 0.35s ease-in-out;
+}
+
+@keyframes fadein {
+  from { opacity: 0; transform: translateY(4px); }
+  to   { opacity: 1; transform: translateY(0); }
+}

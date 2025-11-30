@@ -1,35 +1,94 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
-import './style.css';
+import { useEffect, useState } from "react";
+import useSimulation from "./hooks/useSimulation";
 
-function App() {
-  const [count, setCount] = useState(0)
+import Canvas from "./components/Canvas";
+import InputPanel from "./components/InputPanel";
+import OutputPanel from "./components/OutputPanel";
+
+export default function App() {
+
+  const {
+    params, setParams,
+    state, setState,
+    view, setView,
+    trajectory, setTrajectory,
+    prevTrajectory,
+    startSimulation,
+    resetSimulation,
+    stopSimulation
+  } = useSimulation();
+
+  // Untuk history snapshot
+  const [prevParams, setPrevParams] = useState(null);
+  const [prevState, setPrevState] = useState(null);
+
+  // Ambil history ketika startSimulation dipanggil
+  useEffect(() => {
+    // Kalau simulation baru saja dimulai, simpan snapshot history
+    if (state.running && trajectory.length === 1) {
+
+      // Simpan prevParams sebelum perubahan
+      setPrevParams({ ...params });
+
+      // Simpan prevState (snapshot sebelum gerak)
+      setPrevState({
+        t: 0,
+        x: params.x0,
+        y: params.y0,
+        maxHeight: params.y0
+      });
+    }
+  }, [state.running]);
 
   return (
-    <>
-      <div>
-        <a href="https://vite.dev" target="_blank">
-          <img src={viteLogo} className="logo" alt="Vite logo" />
-        </a>
-        <a href="https://react.dev" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
-      </div>
-      <h1>Vite + React</h1>
-      <div className="card">
-        <button onClick={() => setCount((count) => count + 1)}>
-          count is {count}
-        </button>
-        <p>
-          Edit <code>src/App.jsx</code> and save to test HMR
-        </p>
-      </div>
-      <p className="read-the-docs">
-        Click on the Vite and React logos to learn more
-      </p>
-    </>
-  )
-}
+    <div className="w-full h-screen p-4 bg-gradient-to-br from-blue-900 to-blue-600 flex flex-col">
 
-export default App
+      <h1 className="text-center text-white font-extrabold text-xl drop-shadow mb-2">
+        Simulasi Gerak Parabola Modern (React + Canvas)
+      </h1>
+
+      <div className="flex flex-1 gap-4 overflow-hidden">
+
+        {/* LEFT PANEL */}
+        <InputPanel 
+          params={params}
+          setParams={setParams}
+          startSimulation={startSimulation}
+          resetSimulation={() => {
+            resetSimulation();
+            setPrevParams(null);
+            setPrevState(null);
+          }}
+        />
+
+        {/* CANVAS */}
+        <Canvas
+          params={params}
+          state={state}
+          view={view}
+          trajectory={trajectory}
+          prevTrajectory={prevTrajectory}
+          setView={setView}
+          setParams={setParams}
+          startSimulation={() => {
+            // Simpan history lama
+            setPrevParams({ ...params });
+            setPrevState({ ...state });
+
+            startSimulation();
+          }}
+          setTrajectory={setTrajectory}
+        />
+
+        {/* RIGHT PANEL */}
+        <OutputPanel 
+          params={params}
+          state={state}
+          prevParams={prevParams}
+          prevState={prevState}
+        />
+
+      </div>
+    </div>
+  );
+}
