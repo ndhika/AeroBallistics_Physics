@@ -1,24 +1,28 @@
-import React, { useState, useEffect } from 'react';
+import { useEffect } from 'react';
 
-export default function InputPanel({ onStart, onReset, isRunning, onParamChange }) {
-    const [params, setParams] = useState({
-        x0: 0, y0: 0, v0: 50, ang: 45, m: 1.0, k: 0, g: 9.8, dragOn: false, gravityPreset: "9.8"
-    });
-
+export default function InputPanel({ params, onStart, onReset, isRunning, onParamChange }) {
     const handleChange = (e) => {
         const { name, value, type, checked } = e.target;
         let val = type === 'checkbox' ? checked : parseFloat(value);
         
-        // Handle logic khusus
+        // Buat object baru
+        let newParams = { ...params, [name]: val };
+
         if (name === 'gravityPreset') {
             if (value !== 'custom') {
-                setParams(p => ({ ...p, gravityPreset: value, g: parseFloat(value) }));
+                newParams = { ...newParams, gravityPreset: value, g: parseFloat(value) };
             } else {
-                setParams(p => ({ ...p, gravityPreset: 'custom' }));
+                newParams = { ...newParams, gravityPreset: 'custom' };
             }
         } else {
-            setParams(p => ({ ...p, [name]: val }));
+            // Logic khusus DragOn (jika checkbox dinyalakan, isi default k)
+            if (name === 'dragOn' && val === true && params.k === 0) {
+                newParams.k = 0.05; 
+            }
         }
+        
+        // Kirim ke Parent (App.jsx)
+        onParamChange(newParams);
     };
 
     // Kirim perubahan angle ke parent (untuk visual meriam realtime)
