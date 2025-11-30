@@ -1,95 +1,86 @@
-export default function OutputPanel({ params, state, prevParams, prevState }) {
+import React from 'react';
 
-  // Format number
-  const fmt = (n) => (isNaN(n) ? "-" : Number(n).toFixed(2));
+export default function OutputPanel({ liveData, historyData, activeParams }) {
+    return (
+        <div className="flex-none w-full md:w-[290px] bg-white/95 backdrop-blur-md p-4 rounded-xl shadow-2xl flex flex-col overflow-y-auto border border-white/20">
+            
+            {/* Bagian Merah (Aktif) */}
+            <div className="mb-6">
+                <h3 className="text-red-700 font-bold border-b-2 border-red-100 pb-2 mb-3 text-sm uppercase tracking-wide">
+                    🔴 Percobaan Aktif
+                </h3>
+                
+                <div className="bg-gray-50 border border-gray-200 rounded-lg p-3 mb-3 text-xs">
+                    <div className="grid grid-cols-2 gap-x-2 gap-y-1">
+                        <InfoItem label="Posisi" val={`${activeParams?.x0 || 0}m, ${activeParams?.y0 || 0}m`} />
+                        <InfoItem label="Massa" val={`${activeParams?.m || 1}kg`} />
+                        <InfoItem label="Velo" val={`${activeParams?.v0 || 50}m/s`} />
+                        <InfoItem label="Sudut" val={`${activeParams?.ang || 45}°`} />
+                        <InfoItem label="Grav" val={activeParams?.g || 9.8} />
+                        <InfoItem label="Drag" val={activeParams?.dragOn ? activeParams?.k : "Off"} />
+                    </div>
+                </div>
 
-  return (
-    <div className="w-[280px] bg-white/90 backdrop-blur-md rounded-xl shadow-lg p-4 overflow-y-auto">
+                <div className="space-y-2">
+                    <ResultCard color="red" label="Waktu Tempuh (t)" value={`${liveData.t.toFixed(2)} s`} />
+                    <ResultCard color="red" label="Jarak Jauh (R)" value={`${Math.abs(liveData.x - (activeParams?.x0||0)).toFixed(2)} m`} />
+                    <ResultCard color="red" label="Tinggi Maksimum (H)" value={`${liveData.hMax.toFixed(2)} m`} />
+                </div>
+            </div>
 
-      {/* ========================= */}
-      {/* ACTIVE RUN (RED) */}
-      {/* ========================= */}
-      <h3 className="text-red-600 font-bold text-sm uppercase mb-2 border-b border-red-300 pb-1">
-        🔴 Percobaan Aktif
-      </h3>
+            {/* Bagian Biru (History) */}
+            <div className={`transition-opacity duration-300 ${liveData.isRunning ? 'opacity-60' : 'opacity-100'}`}>
+                <h3 className="text-blue-700 font-bold border-b-2 border-blue-100 pb-2 mb-3 text-sm uppercase tracking-wide border-t-2 border-dashed pt-4 mt-2">
+                    🔵 Percobaan Lalu
+                </h3>
 
-      <div className="bg-gray-50 border border-gray-200 rounded-md p-3 mb-3 text-xs">
-        <div className="grid grid-cols-2 gap-2">
-          <div className="flex justify-between"><span className="text-gray-500">Posisi:</span> <b>{params.x0}m, {params.y0}m</b></div>
-          <div className="flex justify-between"><span className="text-gray-500">Massa:</span> <b>{params.mass}kg</b></div>
-          <div className="flex justify-between"><span className="text-gray-500">Velo:</span> <b>{params.v0}m/s</b></div>
-          <div className="flex justify-between"><span className="text-gray-500">Sudut:</span> <b>{params.angle}°</b></div>
-          <div className="flex justify-between"><span className="text-gray-500">Grav:</span> <b>{params.gravity}</b></div>
-          <div className="flex justify-between"><span className="text-gray-500">Drag:</span> <b>{params.dragEnable ? params.dragK : "Off"}</b></div>
+                <div className="bg-blue-50 border border-blue-100 rounded-lg p-3 mb-3 text-xs text-center text-gray-500">
+                    {historyData ? (
+                        <div className="grid grid-cols-2 gap-x-2 gap-y-1 text-left">
+                            <InfoItem label="Posisi" val={`${historyData.params.x0}m, ${historyData.params.y0}m`} />
+                            <InfoItem label="Massa" val={`${historyData.params.m}kg`} />
+                            <InfoItem label="Velo" val={`${historyData.params.v0}m/s`} />
+                            <InfoItem label="Sudut" val={`${historyData.params.ang}°`} />
+                        </div>
+                    ) : "Belum ada data..."}
+                </div>
+
+                <div className="space-y-1">
+                    <MiniResultCard label="Waktu" value={historyData ? `${historyData.t}s` : '-'} />
+                    <MiniResultCard label="Jarak" value={historyData ? `${historyData.dist}m` : '-'} />
+                    <MiniResultCard label="Tinggi" value={historyData ? `${historyData.height}m` : '-'} />
+                </div>
+            </div>
         </div>
-      </div>
+    );
+}
 
-      {/* STAT CARDS */}
-      <div className="mb-3">
-        <div className="bg-red-50 border-l-4 border-red-500 p-2 rounded-md mb-2">
-          <span className="block text-[10px] font-bold text-red-600 uppercase">Waktu Tempuh (t)</span>
-          <h2 className="font-mono text-lg text-red-700">{fmt(state.t)} s</h2>
+function InfoItem({ label, val }) {
+    return (
+        <div className="flex justify-between">
+            <span className="text-gray-500 font-semibold">{label}:</span>
+            <b className="text-gray-800">{val}</b>
         </div>
+    );
+}
 
-        <div className="bg-red-50 border-l-4 border-red-500 p-2 rounded-md mb-2">
-          <span className="block text-[10px] font-bold text-red-600 uppercase">Jarak (R)</span>
-          <h2 className="font-mono text-lg text-red-700">{fmt(Math.abs(state.x - params.x0))} m</h2>
+function ResultCard({ color, label, value }) {
+    const borderClass = color === 'red' ? 'border-red-500 bg-red-50' : 'border-blue-500 bg-blue-50';
+    const textClass = color === 'red' ? 'text-red-700' : 'text-blue-700';
+
+    return (
+        <div className={`px-3 py-2 rounded-lg border-l-4 shadow-sm bg-white ${borderClass}`}>
+            <span className="text-[10px] font-bold text-gray-400 uppercase">{label}</span>
+            <h2 className={`text-xl font-mono font-bold leading-tight ${textClass}`}>{value}</h2>
         </div>
+    );
+}
 
-        <div className="bg-red-50 border-l-4 border-red-500 p-2 rounded-md">
-          <span className="block text-[10px] font-bold text-red-600 uppercase">Tinggi Maksimum (H)</span>
-          <h2 className="font-mono text-lg text-red-700">{fmt(state.maxHeight)} m</h2>
+function MiniResultCard({ label, value }) {
+    return (
+        <div className="px-3 py-1.5 rounded-md border-l-4 border-blue-400 bg-blue-50/50 flex justify-between items-center">
+            <span className="text-[10px] font-bold text-gray-400 uppercase">{label}</span>
+            <strong className="text-sm font-mono text-blue-700">{value}</strong>
         </div>
-      </div>
-
-
-      {/* ========================= */}
-      {/* HISTORY (BLUE) */}
-      {/* ========================= */}
-      <h3 className="text-blue-600 font-bold text-sm uppercase mt-5 mb-2 border-b border-blue-300 pb-1">
-        🔵 Percobaan Lalu
-      </h3>
-
-      {/* History Params */}
-      {prevParams ? (
-        <div className="bg-blue-50 border border-blue-200 rounded-md p-3 mb-3 text-xs">
-          <div className="grid grid-cols-2 gap-2">
-            <div className="flex justify-between"><span className="text-gray-500">Posisi:</span> <b>{prevParams.x0}m, {prevParams.y0}m</b></div>
-            <div className="flex justify-between"><span className="text-gray-500">Massa:</span> <b>{prevParams.mass}kg</b></div>
-            <div className="flex justify-between"><span className="text-gray-500">Velo:</span> <b>{prevParams.v0}m/s</b></div>
-            <div className="flex justify-between"><span className="text-gray-500">Sudut:</span> <b>{prevParams.angle}°</b></div>
-            <div className="flex justify-between"><span className="text-gray-500">Grav:</span> <b>{prevParams.gravity}</b></div>
-            <div className="flex justify-between"><span className="text-gray-500">Drag:</span> <b>{prevParams.dragEnable ? prevParams.dragK : "Off"}</b></div>
-          </div>
-        </div>
-      ) : (
-        <p className="text-xs text-gray-400 italic mb-3">Belum ada data...</p>
-      )}
-
-      {/* HISTORY STATS */}
-      {prevState ? (
-        <div className="space-y-2">
-          <div className="bg-blue-50 border-l-4 border-blue-500 p-2 rounded-md flex justify-between items-center">
-            <span className="text-[10px] text-blue-600 font-bold uppercase">Waktu</span>
-            <strong className="font-mono text-blue-700 text-sm">{fmt(prevState.t)} s</strong>
-          </div>
-
-          <div className="bg-blue-50 border-l-4 border-blue-500 p-2 rounded-md flex justify-between items-center">
-            <span className="text-[10px] text-blue-600 font-bold uppercase">Jarak</span>
-            <strong className="font-mono text-blue-700 text-sm">
-              {fmt(Math.abs(prevState.x - prevParams.x0))} m
-            </strong>
-          </div>
-
-          <div className="bg-blue-50 border-l-4 border-blue-500 p-2 rounded-md flex justify-between items-center">
-            <span className="text-[10px] text-blue-600 font-bold uppercase">Tinggi</span>
-            <strong className="font-mono text-blue-700 text-sm">
-              {fmt(prevState.maxHeight)} m
-            </strong>
-          </div>
-        </div>
-      ) : null}
-
-    </div>
-  );
+    );
 }

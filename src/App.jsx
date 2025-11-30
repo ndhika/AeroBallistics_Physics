@@ -1,94 +1,67 @@
-import { useEffect, useState } from "react";
-import useSimulation from "./hooks/useSimulation";
+import React, { useState, useCallback } from 'react';
+import InputPanel from './components/InputPanel';
+import OutputPanel from './components/OutputPanel';
+import Canvas from './components/Canvas';
+import { useSimulation } from './hooks/useSimulation';
 
-import Canvas from "./components/Canvas";
-import InputPanel from "./components/InputPanel";
-import OutputPanel from "./components/OutputPanel";
+function App() {
+  const { canvasRef, liveData, history, startSimulation, resetSimulation, draw, physics ,updatePhysicsParams } = useSimulation();
+  
+  // Kita simpan activeParams di sini agar OutputPanel bisa baca data settingan user
+  // meskipun user mengubah input form saat simulasi berjalan.
+  const [activeParams, setActiveParams] = useState(null);
 
-export default function App() {
+  // Callback saat user mengetik di form, kita update visual meriam (sudut) real-time
+  const handleParamChange = useCallback((newParams) => {
+      // Pastikan physics.current ada & simulasi tidak jalan
+      if(!liveData.isRunning && physics.current) {
+          
+          // GANTI BARIS ERROR KEMARIN DENGAN INI:
+          updatePhysicsParams(newParams);
+          
+          draw();
+      }
+  }, [liveData.isRunning, draw, updatePhysicsParams, physics]);
 
-  const {
-    params, setParams,
-    state, setState,
-    view, setView,
-    trajectory, setTrajectory,
-    prevTrajectory,
-    startSimulation,
-    resetSimulation,
-    stopSimulation
-  } = useSimulation();
+  const handleStart = (params) => {
+    setActiveParams(params);
+    startSimulation(params);
+  };
 
-  // Untuk history snapshot
-  const [prevParams, setPrevParams] = useState(null);
-  const [prevState, setPrevState] = useState(null);
-
-  // Ambil history ketika startSimulation dipanggil
-  useEffect(() => {
-    // Kalau simulation baru saja dimulai, simpan snapshot history
-    if (state.running && trajectory.length === 1) {
-
-      // Simpan prevParams sebelum perubahan
-      setPrevParams({ ...params });
-
-      // Simpan prevState (snapshot sebelum gerak)
-      setPrevState({
-        t: 0,
-        x: params.x0,
-        y: params.y0,
-        maxHeight: params.y0
-      });
-    }
-  }, [state.running]);
+  const handleReset = () => {
+    resetSimulation();
+  };
 
   return (
-    <div className="w-full h-screen p-4 bg-gradient-to-br from-blue-900 to-blue-600 flex flex-col">
-
-      <h1 className="text-center text-white font-extrabold text-xl drop-shadow mb-2">
-        Simulasi Gerak Parabola Modern (React + Canvas)
+    <div className="min-h-screen w-full bg-linear-to-br from-[#1e3c72] to-[#2a5298] p-4 font-sans text-slate-800 flex flex-col items-center">
+      
+      <h1 className="text-2xl md:text-3xl font-extrabold text-white mb-4 drop-shadow-md text-center">
+        Simulasi Gerak Parabola Pro (React)
       </h1>
 
-      <div className="flex flex-1 gap-4 overflow-hidden">
-
-        {/* LEFT PANEL */}
+      <div className="w-full max-w-[1600px] flex-1 flex flex-col md:flex-row gap-4 h-[calc(100vh-100px)] min-h-[600px]">
+        
+        {/* Kolom Kiri */}
         <InputPanel 
-          params={params}
-          setParams={setParams}
-          startSimulation={startSimulation}
-          resetSimulation={() => {
-            resetSimulation();
-            setPrevParams(null);
-            setPrevState(null);
-          }}
+          onStart={handleStart} 
+          onReset={handleReset} 
+          isRunning={liveData.isRunning}
+          onParamChange={handleParamChange}
         />
 
-        {/* CANVAS */}
-        <Canvas
-          params={params}
-          state={state}
-          view={view}
-          trajectory={trajectory}
-          prevTrajectory={prevTrajectory}
-          setView={setView}
-          setParams={setParams}
-          startSimulation={() => {
-            // Simpan history lama
-            setPrevParams({ ...params });
-            setPrevState({ ...state });
+        {/* Kolom Tengah (Canvas) */}
+        <Canvas canvasRef={canvasRef} physics={physics} draw={draw} />
 
-            startSimulation();
-          }}
-          setTrajectory={setTrajectory}
-        />
-
-        {/* RIGHT PANEL */}
+        {/* Kolom Kanan */}
         <OutputPanel 
-          params={params}
-          state={state}
-          prevParams={prevParams}
-          prevState={prevState}
+          liveData={liveData} 
+          historyData={history}
+          activeParams={activeParams || physics.current?.params}
         />
 
       </div>
     </div>
   );
 }
+
+export default App;
