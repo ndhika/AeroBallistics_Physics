@@ -252,19 +252,68 @@ export function useSimulation() {
 
     const drawTrajectory = (ctx, canvas, traj, color, isPrev) => {
         if(traj.length === 0) return;
-        ctx.beginPath(); ctx.strokeStyle=color; ctx.lineWidth=3; ctx.setLineDash(isPrev?[10,5]:[5,5]);
         
-        // Loop point
+        ctx.beginPath(); 
+        ctx.strokeStyle=color; 
+        ctx.lineWidth=3; 
+        ctx.setLineDash(isPrev?[10,5]:[5,5]);
+        
         let started = false;
         for(let i=0; i<traj.length; i+=2) { 
             let px = worldToScreenX(traj[i].x, canvas.width);
             let py = worldToScreenY(traj[i].y, canvas.height);
-            // Culling (Jangan gambar jika jauh diluar layar)
+            
             if (px < -100 || px > canvas.width + 100 || py < -100 || py > canvas.height + 100) continue;
+            
             if (!started) { ctx.moveTo(px, py); started = true; }
             else ctx.lineTo(px, py);
         }
-        ctx.stroke(); ctx.setLineDash([]);
+        ctx.stroke(); 
+        ctx.setLineDash([]);
+
+        // --- 2. FITUR BARU: LABEL TITIK TERTINGGI (HANYA JIKA BUKAN PREV) ---
+        if (!isPrev && traj.length > 2) {
+            
+            const peak = traj.reduce((max, p) => p.y > max.y ? p : max, traj[0]);
+
+            if (peak && peak.y > 1.0) {
+                // Konversi posisi puncak ke layar
+                const px = worldToScreenX(peak.x, canvas.width);
+                const py = worldToScreenY(peak.y, canvas.height);
+
+                // Setup Teks
+                const text = `H: ${peak.y.toFixed(1)}m`;
+                ctx.font = "bold 10px sans-serif";
+                const metrics = ctx.measureText(text);
+                const w = metrics.width + 12; 
+                const h = 20;
+                
+                // Posisi kotak (sedikit di atas garis)
+                const boxX = px - w / 2;
+                const boxY = py - 30; 
+
+                // Gambar Background Kotak Hitam
+                ctx.beginPath();
+                ctx.fillStyle = "#0f172a"; 
+                if (ctx.roundRect) {
+                    ctx.roundRect(boxX, boxY, w, h, 4);
+                } else {
+                    ctx.rect(boxX, boxY, w, h);
+                }
+                ctx.fill();
+                ctx.beginPath();
+                ctx.moveTo(px, boxY + h); 
+                ctx.lineTo(px - 4, boxY + h);
+                ctx.lineTo(px, boxY + h + 4); 
+                ctx.lineTo(px + 4, boxY + h);
+                ctx.fill();
+
+                ctx.fillStyle = "white";
+                ctx.textAlign = "center";
+                ctx.textBaseline = "middle";
+                ctx.fillText(text, px, boxY + h/2 + 1);
+            }
+        }
     };
 
     // --- FUNGSI GAMBAR BOLA GAME ---
