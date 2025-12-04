@@ -1,76 +1,87 @@
-export default function OutputPanel({ liveData, historyData, activeParams }) {
+import React from 'react';
+
+export default function OutputPanel({ liveData, historyData, activeParams, onClose }) {
     return (
-        <div className="flex-none w-full md:w-[290px] bg-white/95 backdrop-blur-md p-3 me-3 rounded-xl shadow-2xl flex flex-col overflow-y-auto border border-white/20">
-            {/* Bagian Merah (Aktif) */}
-            <div className="mb-6">
-                <h3 className="text-red-700 font-bold border-b-2 border-red-100 pb-2 mb-3 text-sm uppercase tracking-wide">
-                    🔴 Percobaan Aktif
-                </h3>                
-                <div className="bg-gray-50 border border-gray-200 rounded-lg p-3 mb-3 text-xs">
-                    <div className="grid grid-cols-2 gap-x-2 gap-y-1">
-                        <InfoItem label="Posisi" val={`${activeParams?.x0 || 0}m, ${activeParams?.y0 || 0}m`} />
-                        <InfoItem label="Massa" val={`${activeParams?.m || 1}kg`} />
-                        <InfoItem label="Velo" val={`${activeParams?.v0 || 50}m/s`} />
-                        <InfoItem label="Sudut" val={`${activeParams?.ang || 45}°`} />
-                        <InfoItem label="Grav" val={activeParams?.g || 9.8} />
-                        <InfoItem label="Hambatan Udara" val={activeParams?.dragOn ? activeParams?.k : "Off"} />
+        <div className="bg-white/90 backdrop-blur-md rounded-xl shadow-lg border border-white/50 overflow-hidden flex flex-col ring-1 ring-black/5">
+            <div className="flex justify-between items-center px-3 py-2 border-b border-gray-100/50 bg-linear-to-b from-white to-gray-50/50">
+                <h3 className="text-slate-700 font-bold text-[10px] flex items-center gap-1.5 uppercase tracking-wide">
+                    📊 Data
+                </h3>
+                <button onClick={onClose} className="w-4 h-4 flex items-center justify-center rounded-full bg-gray-100 text-gray-400 hover:bg-red-50 hover:text-red-500 transition-colors text-[9px]">✕</button>
+            </div>
+
+            <div className="p-2 overflow-y-auto custom-scrollbar space-y-4">
+                <div>
+                    <h4 className="text-[9px] font-extrabold text-red-500 uppercase mb-2 tracking-widest flex items-center gap-1.5">
+                        <span className="relative flex h-1.5 w-1.5"><span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span><span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-red-500"></span></span>
+                        Aktif
+                    </h4>
+                    
+                    <div className="grid grid-cols-2 gap-1.5 mb-2">
+                        <Badge label="Posisi" val={`${activeParams?.x0},${activeParams?.y0}`} />
+                        <Badge label="Velo" val={activeParams?.v0} />
+                        <Badge label="Sudut" val={activeParams?.ang} />
+                        <Badge label="Massa" val={activeParams?.m} />
+                        <Badge label="Drag" val={activeParams?.dragOn ? activeParams?.k : 'Off'} />
+                        <Badge label="Grav" val={activeParams?.g} />
+                    </div>
+
+                    <div className="space-y-1.5">
+                        <ResultRow label="Waktu" value={liveData.t.toFixed(2)} unit="s" color="red" />
+                        <ResultRow label="Jarak" value={Math.abs(liveData.x - (activeParams?.x0||0)).toFixed(2)} unit="m" color="red" />
+                        <ResultRow label="Tinggi" value={liveData.hMax.toFixed(2)} unit="m" color="red" />
                     </div>
                 </div>
-                <div className="space-y-2">
-                    <ResultCard color="red" label="Waktu Tempuh (t)" value={`${liveData.t.toFixed(2)} s`} />
-                    <ResultCard color="red" label="Jarak Jauh (R)" value={`${Math.abs(liveData.x - (activeParams?.x0||0)).toFixed(2)} m`} />
-                    <ResultCard color="red" label="Tinggi Maksimum (H)" value={`${liveData.hMax.toFixed(2)} m`} />
-                </div>
-            </div>
-            {/* Bagian Biru (History) */}
-            <div className={`transition-opacity duration-300 ${liveData.isRunning ? 'opacity-60' : 'opacity-100'}`}>
-                <h3 className="text-blue-700 font-bold border-b-2 border-blue-100 pb-2 mb-3 text-sm uppercase tracking-wide border-t-2 border-dashed pt-4 mt-2">
-                    🔵 Percobaan Lalu
-                </h3>
-                <div className="bg-blue-50 border border-blue-100 rounded-lg p-3 mb-3 text-xs text-center text-gray-500">
+                <div className="border-t border-dashed border-slate-200"></div>
+                {/* HISTORY */}
+                <div className={`transition-all duration-300 ${liveData.isRunning ? 'opacity-50 grayscale' : 'opacity-100'}`}>
+                    <h4 className="text-[9px] font-extrabold text-blue-500 uppercase mb-2 tracking-widest flex items-center gap-1.5">
+                        <span className="h-1.5 w-1.5 rounded-full bg-blue-500"></span> Last
+                    </h4>
+
                     {historyData ? (
-                        <div className="grid grid-cols-2 gap-x-2 gap-y-1 text-left">
-                            <InfoItem label="Posisi" val={`${historyData.params.x0}m, ${historyData.params.y0}m`} />
-                            <InfoItem label="Massa" val={`${historyData.params.m}kg`} />
-                            <InfoItem label="Velo" val={`${historyData.params.v0}m/s`} />
-                            <InfoItem label="Sudut" val={`${historyData.params.ang}°`} />
-                            <InfoItem label="Grav" val={historyData.params.g} />
-                            <InfoItem label="Hambatan Udara" val={historyData.params.dragOn ? historyData.params.k : "Off"} />
-                        </div>
-                    ) : "Belum ada data..."}
-                </div>
-                <div className="space-y-1">
-                    <MiniResultCard label="Waktu Tempuh (t)" value={historyData ? `${historyData.t}s` : '-'} />
-                    <MiniResultCard label="Jarak Jauh (R)" value={historyData ? `${historyData.dist}m` : '-'} />
-                    <MiniResultCard label="Tinggi Maksimum (H)" value={historyData ? `${historyData.height}m` : '-'} />
+                        <>
+                            <div className="grid grid-cols-2 gap-1.5 mb-2">
+                                <Badge label="Posisi" val={`${historyData.params.x0},${historyData.params.y0}`} />
+                                <Badge label="Velo" val={historyData.params.v0} />
+                                <Badge label="Sudut" val={historyData.params.ang} />
+                                <Badge label="Massa" val={historyData.params.m} />
+                                <Badge label="Drag" val={historyData.params.dragOn ? historyData.params.k : 'Off'} />
+                                <Badge label="Grav" val={historyData.params.g} />
+                            </div>
+                            <div className="space-y-1.5">
+                                <ResultRow label="Waktu" value={historyData.t} unit="s" color="blue" />
+                                <ResultRow label="Jarak" value={historyData.dist} unit="m" color="blue" />
+                                <ResultRow label="Tinggi" value={historyData.height} unit="m" color="blue" />
+                            </div>
+                        </>
+                    ) : (
+                        <div className="text-center py-4 text-[9px] text-slate-400 bg-slate-50 rounded border border-dashed border-slate-200">No Data</div>
+                    )}
                 </div>
             </div>
         </div>
     );
 }
-function InfoItem({ label, val }) {
+
+function Badge({ label, val }) {
     return (
-        <div className="flex justify-between">
-            <span className="text-gray-500 font-semibold">{label}:</span>
-            <b className="text-gray-800">{val}</b>
+        <div className="bg-slate-50 px-1.5 py-1 rounded border border-slate-100 flex flex-col justify-center min-w-0">
+            <span className="text-[8px] text-slate-400 font-bold uppercase tracking-wide truncate">{label}</span>
+            <span className="text-[10px] font-bold text-slate-700 truncate">{val}</span>
         </div>
     );
 }
-function ResultCard({ color, label, value }) {
-    const borderClass = color === 'red' ? 'border-red-500 bg-red-50' : 'border-blue-500 bg-blue-50';
-    const textClass = color === 'red' ? 'text-red-700' : 'text-blue-700';
+
+function ResultRow({ label, value, unit, color }) {
+    const isRed = color === 'red';
     return (
-        <div className={`px-3 py-2 rounded-lg border-l-4 shadow-sm bg-white ${borderClass}`}>
-            <span className="text-[10px] font-bold text-gray-400 uppercase">{label}</span>
-            <h2 className={`text-xl font-mono font-bold leading-tight ${textClass}`}>{value}</h2>
-        </div>
-    );
-}
-function MiniResultCard({ label, value }) {
-    return (
-        <div className="px-3 py-1.5 rounded-md border-l-4 border-blue-400 bg-blue-50/50 flex justify-between items-center">
-            <span className="text-[10px] font-bold text-gray-400 uppercase">{label}</span>
-            <strong className="text-sm font-mono text-blue-700">{value}</strong>
+        <div className={`flex justify-between items-center px-2 py-1.5 rounded-lg border-l-2 shadow-sm bg-white ${isRed ? 'border-red-500' : 'border-blue-500'}`}>
+            <span className="text-[8px] font-bold text-slate-500 uppercase tracking-wide">{label}</span>
+            <div className="flex items-baseline gap-0.5">
+                <span className={`text-sm font-mono font-bold ${isRed ? 'text-red-600' : 'text-blue-600'}`}>{value}</span>
+                <span className="text-[8px] text-slate-400 font-bold">{unit}</span>
+            </div>
         </div>
     );
 }

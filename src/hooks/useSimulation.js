@@ -3,8 +3,6 @@ import { useRef, useState, useCallback } from 'react';
 export function useSimulation() {
     const canvasRef = useRef(null);
     const requestRef = useRef();
-    
-    // State UI
     const [liveData, setLiveData] = useState({ t: 0, x: 0, y: 0, hMax: 0, isRunning: false });
     const [history, setHistory] = useState(null);
 
@@ -25,7 +23,6 @@ export function useSimulation() {
     });
 
     // --- COORDINATE SYSTEMS (World <-> Screen) ---
-    // World Y+ is UP, Screen Y+ is DOWN.
     const worldToScreenX = (wx, width) => (wx * physics.current.view.scale) + physics.current.view.x + (width * 0.1); 
     const worldToScreenY = (wy, height) => height - (wy * physics.current.view.scale) - physics.current.view.y - (height * 0.1); 
     const screenToWorldX = (sx, width) => (sx - physics.current.view.x - (width * 0.1)) / physics.current.view.scale;
@@ -45,14 +42,13 @@ export function useSimulation() {
         let step = 1;
         const minPixelGap = 60; 
 
-        if (scale * 1 >= minPixelGap) step = 1;         // 1m
-        else if (scale * 5 >= minPixelGap) step = 5;    // 5m
-        else if (scale * 10 >= minPixelGap) step = 10;  // 10m
-        else if (scale * 50 >= minPixelGap) step = 50;  // 50m
-        else if (scale * 100 >= minPixelGap) step = 100;// 100m
-        else step = 500;                                // 500m (Zoom out ekstrim)
+        if (scale * 1 >= minPixelGap) step = 1;         
+        else if (scale * 5 >= minPixelGap) step = 5;    
+        else if (scale * 10 >= minPixelGap) step = 10;  
+        else if (scale * 50 >= minPixelGap) step = 50;  
+        else if (scale * 100 >= minPixelGap) step = 100;
+        else step = 500;                                
 
-        // Hitung area yang terlihat saja (Optimization)
         const startWorldX = Math.floor(screenToWorldX(0, width) / step) * step;
         const endWorldX = Math.ceil(screenToWorldX(width, width) / step) * step;
 
@@ -74,7 +70,7 @@ export function useSimulation() {
         ctx.strokeStyle = "#2e7d32"; ctx.lineWidth = 3; ctx.stroke();
 
         // 5. Angka & Tick Mark
-        ctx.fillStyle = "#1a3c34"; // Hijau tua gelap (lebih kontras)
+        ctx.fillStyle = "#1a3c34"; 
         ctx.textAlign = "center";
         ctx.font = "bold 11px Segoe UI, sans-serif";
         ctx.beginPath();
@@ -98,7 +94,7 @@ export function useSimulation() {
     const drawBaseStructure = (ctx, canvas) => {
         const p = physics.current;
         const x0 = p.params.x0;
-        const y0 = p.params.y0; // Tinggi awal
+        const y0 = p.params.y0; 
         if (Math.abs(y0) < 0.1) return;
         const px = worldToScreenX(x0, canvas.width);
         const py = worldToScreenY(y0, canvas.height);
@@ -134,7 +130,7 @@ export function useSimulation() {
             const holeWidth = structWidth * 1.5; 
             ctx.fillRect(px - holeWidth/2, groundY, holeWidth, py - groundY);
             // 2. Dinding Parit (Kiri & Kanan)
-            ctx.strokeStyle = "#5d4037"; // Warna tanah coklat tua
+            ctx.strokeStyle = "#5d4037"; 
             ctx.lineWidth = 3;
             ctx.beginPath();
             // Dinding Kiri
@@ -147,7 +143,7 @@ export function useSimulation() {
             ctx.stroke();
             // 3. Detail Tanah di Dinding (Arsiran)
             ctx.fillStyle = "rgba(0,0,0,0.1)";
-            ctx.fillRect(px - holeWidth/2, py, holeWidth, 4); // Bayangan di lantai
+            ctx.fillRect(px - holeWidth/2, py, holeWidth, 4); 
         }
     };
 
@@ -189,9 +185,9 @@ export function useSimulation() {
         // A. Efek 3D Metalik (Gradient)
         // Membuat gradasi dari atas ke bawah (Gelap -> Terang -> Gelap)
         const grad = ctx.createLinearGradient(0, -cannonWidth/2, 0, cannonWidth/2);
-        grad.addColorStop(0, "#2c3e50");   // Atas Gelap
-        grad.addColorStop(0.5, "#7f8c8d"); // Tengah Terang (Kilap)
-        grad.addColorStop(1, "#2c3e50");   // Bawah Gelap
+        grad.addColorStop(0, "#2c3e50");   
+        grad.addColorStop(0.5, "#7f8c8d"); 
+        grad.addColorStop(1, "#2c3e50");   
 
         // B. Badan Utama Meriam
         ctx.fillStyle = grad;
@@ -221,13 +217,13 @@ export function useSimulation() {
         const wheelSize = cannonWidth * 0.7; 
         ctx.beginPath(); 
         ctx.arc(px, py + (wheelSize*0.3), wheelSize, 0, Math.PI * 2); 
-        ctx.fillStyle = "#2d3436"; // Karet ban
+        ctx.fillStyle = "#2d3436";
         ctx.fill();
         
         // Velg Dalam
         ctx.beginPath(); 
         ctx.arc(px, py + (wheelSize*0.3), wheelSize * 0.6, 0, Math.PI * 2); 
-        ctx.fillStyle = "#95a5a6"; // Metal
+        ctx.fillStyle = "#95a5a6";
         ctx.fill();
         
         // Poros Tengah (Pivot)
@@ -260,13 +256,11 @@ export function useSimulation() {
         
         // Loop point
         let started = false;
-        for(let i=0; i<traj.length; i+=2) { // Skip point biar performa ringan
+        for(let i=0; i<traj.length; i+=2) { 
             let px = worldToScreenX(traj[i].x, canvas.width);
             let py = worldToScreenY(traj[i].y, canvas.height);
-            
             // Culling (Jangan gambar jika jauh diluar layar)
             if (px < -100 || px > canvas.width + 100 || py < -100 || py > canvas.height + 100) continue;
-
             if (!started) { ctx.moveTo(px, py); started = true; }
             else ctx.lineTo(px, py);
         }
@@ -281,9 +275,9 @@ export function useSimulation() {
 
         // 1. Badan Bola (Merah Gradient 3D)
         const grad = ctx.createRadialGradient(-radius*0.3, -radius*0.3, radius*0.2, 0, 0, radius);
-        grad.addColorStop(0, "#ff7675"); // Highlight terang
-        grad.addColorStop(0.5, "#d63031"); // Merah utama
-        grad.addColorStop(1, "#631819"); // Bayangan gelap
+        grad.addColorStop(0, "#ff7675"); 
+        grad.addColorStop(0.5, "#d63031"); 
+        grad.addColorStop(1, "#631819"); 
         
         ctx.fillStyle = grad;
         ctx.beginPath();
@@ -379,7 +373,7 @@ export function useSimulation() {
         // A. Panning (Klik Kanan Geser)
         if (p.view.isDragging) {
             p.view.x += mouseX - p.view.lmx;
-            p.view.y -= mouseY - p.view.lmy; // Y mouse terbalik
+            p.view.y -= mouseY - p.view.lmy; 
             p.view.lmx = mouseX;
             p.view.lmy = mouseY;
             draw();
@@ -427,7 +421,6 @@ export function useSimulation() {
         if (e.touches.length === 1 && p.view.isDragging) {
             const mx = e.touches[0].clientX;
             const my = e.touches[0].clientY;
-            
             // Sensitivitas geser HP (1.5x lebih cepat biar enak)
             const speed = 1.5; 
             p.view.x += (mx - p.view.lmx) * speed;
@@ -475,16 +468,13 @@ export function useSimulation() {
     // =========================================
     // BAGIAN C: BUNGKUS SEMUA JADI SATU
     // =========================================
-    
-    // Objek ini yang dikirim ke App.jsx -> Canvas.jsx
     const interactions = {
-        handleWheel,      // Mouse
-        handleMouseMove,  // Mouse
-        handleTouchStart, // HP
-        handleTouchMove,  // HP
-        handleTouchEnd    // HP
+        handleWheel,     
+        handleMouseMove,  
+        handleTouchStart, 
+        handleTouchMove, 
+        handleTouchEnd    
     };
-
 
     // --- PHYSICS LOOP (Sama seperti sebelumnya) ---
     const updatePhysics = () => {
@@ -509,8 +499,6 @@ export function useSimulation() {
 
         for(let i=0; i < speedMultiplier; i++) { 
             updatePhysics();
-            
-            // Logic Stop
             if(p.y <= 0 && p.vy < 0) {
                 p.y = 0;
                 setLiveData(prev => ({ ...prev, isRunning: false, t: p.t, x: p.x, y: 0, hMax: p.maxHeight }));
