@@ -101,10 +101,10 @@ return (
             </div>
 
             <div className={`
-                absolute top-14 left-2 bottom-2 z-50 
+                absolute top-14 left-2 z-50 
                 w-[220px] md:w-[300px] max-w-[45%] h-fit max-h-[85vh]
                 transition-all duration-300 ease-out origin-top-left
-                ${showSetup ? 'scale-100 opacity-100 translate-x-0' : 'scale-90 opacity-0 -translate-x-4 pointer-events-none'}
+                ${showSetup ? 'opacity-100 pointer-events-auto translate-x-0' : 'opacity-0 -translate-x-4 pointer-events-none'}
             `}>
                 <InputPanel 
                     params={uiParams} onStart={handleShoot} onReset={handleReset} 
@@ -114,10 +114,10 @@ return (
             </div>
 
             <div className={`
-                absolute top-14 right-2 bottom-2 z-50 
+                absolute top-14 right-2 z-50 
                 w-[220px] md:w-[300px] max-w-[45%] h-fit max-h-[85vh]
                 transition-all duration-300 ease-out origin-top-right
-                ${showData ? 'scale-100 opacity-100 translate-x-0' : 'scale-90 opacity-0 translate-x-4 pointer-events-none'}
+                ${showData ? 'opacity-100 translate-x-0 pointer-events-auto' : 'opacity-0 translate-x-4 pointer-events-none'}
             `}>
                 <OutputPanel 
                     liveData={liveData} historyData={history} activeParams={uiParams}

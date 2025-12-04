@@ -34,7 +34,7 @@ export default function InputPanel({ params, onStart, onReset, isRunning, onPara
         onStart({ ...safeParams, k: safeParams.dragOn ? safeParams.k : 0 }); 
     };
     return (
-        <div className="bg-white/90 backdrop-blur-md rounded-xl shadow-lg border border-white/50 overflow-hidden flex flex-col ring-1 ring-black/5 max-h-[80vh]">
+        <div className="bg-white/90 backdrop-blur-md rounded-xl shadow-lg border border-white/50 overflow-hidden flex flex-col ring-1 ring-black/5 max-h-[calc(100vh-80px)]">
             <div className="flex justify-between items-center px-3 py-2 border-b border-gray-100/50 bg-linear-to-b from-white to-gray-50/50">
                 <h3 className="text-slate-700 font-bold text-[10px] flex items-center gap-1.5 uppercase tracking-wide">
                     🎛️ Setup
