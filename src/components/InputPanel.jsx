@@ -1,134 +1,95 @@
-import React, { useState, useEffect } from 'react';
+import { useEffect } from 'react';
 
-export default function InputPanel({ onStart, onReset, isRunning, onParamChange }) {
-    const [params, setParams] = useState({
-        x0: 0, y0: 0, v0: 50, ang: 45, m: 1.0, k: 0, g: 9.8, dragOn: false, gravityPreset: "9.8"
-    });
-
-    const handleChange = (e) => {
-        const { name, value, type, checked } = e.target;
-        let val = type === 'checkbox' ? checked : parseFloat(value);
-        
-        // Handle logic khusus
-        if (name === 'gravityPreset') {
-            if (value !== 'custom') {
-                setParams(p => ({ ...p, gravityPreset: value, g: parseFloat(value) }));
-            } else {
-                setParams(p => ({ ...p, gravityPreset: 'custom' }));
-            }
-        } else {
-            setParams(p => ({ ...p, [name]: val }));
-        }
-    };
-
-    // Kirim perubahan angle ke parent (untuk visual meriam realtime)
-    useEffect(() => {
-        onParamChange(params);
-    }, [params, onParamChange]);
-
-    const handleStart = () => {
-        onStart({
-            ...params,
-            k: params.dragOn ? params.k : 0
-        });
-    };
-
+function InputGroup({ label, name, val, onChange, ...props }) {
     return (
-        <div className="flex-none w-full md:w-[310px] bg-white/95 backdrop-blur-md p-4 rounded-xl shadow-2xl flex flex-col overflow-y-auto border border-white/20">
-            <h3 className="text-gray-700 font-bold border-b-2 border-gray-100 pb-2 mb-4 text-sm uppercase tracking-wide">
-                🎛️ Parameter Fisika
-            </h3>
-
-            {/* Posisi */}
-            <div className="flex gap-2 mb-3">
-                <InputGroup label="Posisi X₀ [m]" name="x0" val={params.x0} onChange={handleChange} />
-                <InputGroup label="Tinggi Y₀ [m]" name="y0" val={params.y0} onChange={handleChange} />
-            </div>
-
-            {/* Gerak */}
-            <div className="flex gap-2 mb-3">
-                <InputGroup label="Kecepatan v₀ [m/s]" name="v0" val={params.v0} onChange={handleChange} />
-                <InputGroup label="Sudut θ [°]" name="ang" val={params.ang} onChange={handleChange} />
-            </div>
-
-            {/* Benda */}
-            <div className="flex gap-2 mb-3">
-                <InputGroup label="Massa m [kg]" name="m" val={params.m} onChange={handleChange} min="0.1" />
-                <div className="flex-1">
-                    <label className="block text-xs font-bold text-gray-500 mb-1">Hambatan k:</label>
-                    <input 
-                        type="number" name="k" value={params.k} onChange={handleChange} step="0.001"
-                        disabled={!params.dragOn}
-                        className={`w-full px-2 py-1.5 border-2 rounded-md font-semibold text-sm transition-colors 
-                        ${!params.dragOn ? 'bg-gray-100 border-gray-200 text-gray-400' : 'bg-white border-blue-200 focus:border-blue-500 outline-none'}`}
-                    />
-                </div>
-            </div>
-
-            <div className="flex items-center gap-2 mb-4 text-sm font-semibold text-gray-700">
-                <input 
-                    type="checkbox" name="dragOn" id="checkDrag" 
-                    checked={params.dragOn} onChange={handleChange}
-                    className="w-4 h-4 accent-blue-600 cursor-pointer" 
-                />
-                <label htmlFor="checkDrag" className="cursor-pointer select-none">Aktifkan Hambatan Udara</label>
-            </div>
-
-            <hr className="border-gray-200 mb-4" />
-
-            {/* Gravitasi */}
-            <div className="mb-4">
-                <label className="block text-xs font-bold text-gray-500 mb-1">Gravitasi (g) [m/s²]:</label>
-                <div className="flex gap-2">
-                    <select 
-                        name="gravityPreset" value={params.gravityPreset} onChange={handleChange}
-                        className="flex-1 px-2 py-1.5 border-2 border-gray-200 rounded-md text-sm font-semibold focus:border-blue-500 outline-none"
-                    >
-                        <option value="9.8">🌍 Bumi (9.8)</option>
-                        <option value="1.62">🌑 Bulan (1.62)</option>
-                        <option value="3.72">🪐 Mars (3.72)</option>
-                        <option value="24.79">☀️ Matahari (24.8)</option>
-                        <option value="0">🌌 Nol G (0)</option>
-                        <option value="custom">✏️ Custom...</option>
-                    </select>
-                    {params.gravityPreset === 'custom' && (
-                        <input 
-                            type="number" name="g" value={params.g} onChange={handleChange} step="0.1" placeholder="Isi..."
-                            className="w-20 px-2 py-1.5 border-2 border-blue-200 rounded-md text-sm font-semibold outline-none"
-                        />
-                    )}
-                </div>
-            </div>
-
-            {/* Tombol */}
-            <div className="mt-auto space-y-2">
-                <button 
-                    onClick={handleStart} disabled={isRunning}
-                    className={`w-full py-2.5 rounded-md font-bold text-white text-sm shadow-md transition-all
-                    ${isRunning ? 'bg-gray-400 cursor-not-allowed' : 'bg-linear-to-r from-blue-600 to-blue-400 hover:-translate-y-0.5 hover:shadow-lg'}`}
-                >
-                    {isRunning ? 'Jalan...' : 'MULAI SIMULASI 🚀'}
-                </button>
-                <button 
-                    onClick={onReset}
-                    className="w-full py-2.5 rounded-md font-bold text-white text-sm shadow-md bg-linear-to-r from-red-600 to-red-400 hover:-translate-y-0.5 hover:shadow-lg transition-all"
-                >
-                    RESET 🔄
-                </button>
-            </div>
+        <div className="flex-1 min-w-0">
+            <label className="block text-[9px] font-bold text-gray-400 mb-0.5 uppercase tracking-wider truncate">{label}</label>
+            <input 
+                type="number" name={name} value={val} onChange={onChange}
+                className="w-full px-2 py-1 bg-gray-50 border border-gray-200 rounded-md text-[11px] font-bold text-gray-700 focus:bg-white focus:border-blue-500 outline-none transition-all"
+                {...props}
+            />
         </div>
     );
 }
 
-function InputGroup({ label, name, val, onChange, ...props }) {
+export default function InputPanel({ params, onStart, onReset, isRunning, onParamChange, onClose }) {
+    const handleChange = (e) => {
+        const { name, value, type, checked } = e.target;
+        let val = type === 'checkbox' ? checked : parseFloat(value);
+        let newParams = { ...params, [name]: val };
+
+        if (name === 'gravityPreset') {
+            if (value !== 'custom') newParams = { ...newParams, gravityPreset: value, g: parseFloat(value) };
+            else newParams = { ...newParams, gravityPreset: 'custom' };
+        } else {
+            if (name === 'dragOn' && val === true && params.k === 0) newParams.k = 0.05; 
+        }
+        onParamChange(newParams);
+    };
+
+    useEffect(() => { onParamChange(params); }, [params, onParamChange]);
+
+    const handleStart = () => { onStart({ ...params, k: params.dragOn ? params.k : 0 }); };
+
     return (
-        <div className="flex-1">
-            <label className="block text-xs font-bold text-gray-500 mb-1">{label}</label>
-            <input 
-                type="number" name={name} value={val} onChange={onChange}
-                className="w-full px-2 py-1.5 border-2 border-gray-200 rounded-md text-sm font-semibold text-gray-800 focus:border-blue-500 outline-none bg-white focus:bg-blue-50/50"
-                {...props}
-            />
+        <div className="bg-white/90 backdrop-blur-md rounded-xl shadow-lg border border-white/50 overflow-hidden flex flex-col ring-1 ring-black/5">
+            <div className="flex justify-between items-center px-3 py-2 border-b border-gray-100/50 bg-linear-to-b from-white to-gray-50/50">
+                <h3 className="text-slate-700 font-bold text-[10px] flex items-center gap-1.5 uppercase tracking-wide">
+                    🎛️ Setup
+                </h3>
+                <button onClick={onClose} className="w-4 h-4 flex items-center justify-center rounded-full bg-gray-100 text-gray-400 hover:bg-red-50 hover:text-red-500 transition-colors text-[9px]">✕</button>
+            </div>
+            <div className="p-2 overflow-y-auto custom-scrollbar space-y-2">
+                
+                <div className="flex gap-2">
+                    <InputGroup label="X₀ (m)" name="x0" val={params.x0} onChange={handleChange} />
+                    <InputGroup label="Y₀ (m)" name="y0" val={params.y0} onChange={handleChange} />
+                </div>
+                <div className="flex gap-2">
+                    <InputGroup label="Velo (m/s)" name="v0" val={params.v0} onChange={handleChange} />
+                    <InputGroup label="Angle (°)" name="ang" val={params.ang} onChange={handleChange} />
+                </div>
+                <div className="bg-slate-50/80 p-2 rounded-lg border border-slate-100 space-y-2">
+                    <div className="flex gap-2">
+                        <InputGroup label="Massa (kg)" name="m" val={params.m} onChange={handleChange} min="0.1" />
+                        <div className="flex-1 min-w-0">
+                            <label className="block text-[9px] font-bold text-gray-400 mb-0.5 uppercase truncate">Hambatan k</label>
+                            <input 
+                                type="number" name="k" value={params.k} onChange={handleChange} step="0.001" disabled={!params.dragOn}
+                                className={`w-full px-2 py-1 border rounded-md text-[11px] font-bold transition-colors ${!params.dragOn ? 'bg-gray-100 text-gray-300 border-transparent' : 'bg-white border-blue-200 text-gray-700'}`}
+                            />
+                        </div>
+                    </div>
+                    <label className="flex items-center gap-2 cursor-pointer pt-0.5">
+                        <input type="checkbox" name="dragOn" checked={params.dragOn} onChange={handleChange} className="w-3 h-3 accent-blue-600 rounded" />
+                        <span className="text-[9px] font-bold text-slate-500">Aktifkan Hambatan Udara</span>
+                    </label>
+                </div>
+                <div>
+                    <label className="block text-[9px] font-bold text-gray-400 mb-0.5 uppercase">Gravitasi</label>
+                    <div className="flex gap-1.5">
+                        <select name="gravityPreset" value={params.gravityPreset} onChange={handleChange} className="flex-1 px-2 py-1 border border-gray-200 rounded-md text-[10px] font-semibold bg-white outline-none">
+                            <option value="9.8">🌍 Bumi</option>
+                            <option value="1.62">🌑 Bulan</option>
+                            <option value="3.72">🪐 Mars</option>
+                            <option value="0">🌌 Nol G</option>
+                            <option value="custom">✏️ Custom</option>
+                        </select>
+                        {params.gravityPreset === 'custom' && (
+                            <input type="number" name="g" value={params.g} onChange={handleChange} step="0.1" className="w-12 px-1 py-1 border border-blue-200 rounded-md text-[10px] font-bold text-center" />
+                        )}
+                    </div>
+                </div>
+                <div className="grid grid-cols-2 gap-2 pt-1">
+                    <button onClick={handleStart} disabled={isRunning} className={`py-1.5 rounded-md font-bold text-white text-[10px] shadow-sm transition-all active:scale-95 ${isRunning ? 'bg-slate-300 cursor-not-allowed' : 'bg-blue-600 hover:bg-blue-700'}`}>
+                        {isRunning ? '...' : 'MULAI 🚀'}
+                    </button>
+                    <button onClick={onReset} className="py-1.5 rounded-md font-bold text-red-500 text-[10px] border border-red-100 hover:bg-red-50 transition-all active:scale-95">
+                        RESET
+                    </button>
+                </div>
+            </div>
         </div>
     );
 }

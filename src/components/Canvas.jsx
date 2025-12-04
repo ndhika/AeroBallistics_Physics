@@ -1,69 +1,76 @@
-import React, { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 
-export default function Canvas({ canvasRef, physics, draw }) {
+export default function Canvas({ canvasRef, physics, draw, interactions, onAngleChange, onShoot }) {
+    
+    const containerRef = useRef(null);
 
     useEffect(() => {
         const canvas = canvasRef.current;
         if(!canvas) return;
 
-        // Mouse Dragging Logic
-        let isDragging = false;
-        let lmx = 0, lmy = 0;
-
-        const onMouseDown = (e) => {
-            if(e.button === 2) { // Kanan
-                isDragging = true; lmx = e.clientX; lmy = e.clientY;
-                if(physics.current) physics.current.view.isDragging = true;
-            }
-        };
-
-        const onMouseMove = (e) => {
-            if(isDragging && physics.current) {
-                physics.current.view.x += e.clientX - lmx;
-                physics.current.view.y += e.clientY - lmy;
-                lmx = e.clientX; 
-                lmy = e.clientY;
+        const resize = () => {
+            if(containerRef.current) {
+                canvas.width = containerRef.current.clientWidth;
+                canvas.height = containerRef.current.clientHeight;
                 draw();
             }
         };
 
-        const onMouseUp = () => { isDragging = false; if(physics.current) physics.current.view.isDragging = false; };
-        
-        const onWheel = (e) => {
-            e.preventDefault();
-            if(!physics.current) return;
-            let sc = e.deltaY < 0 ? 1.1 : 0.9;
-            physics.current.view.scale = Math.max(0.2, Math.min(50, physics.current.view.scale * sc));
-            draw();
+        const ro = new ResizeObserver(resize);
+        if (containerRef.current) ro.observe(containerRef.current);
+
+        const onMouseDown = (e) => {
+            if (e.button === 2 && physics.current) { 
+                physics.current.view.isDragging = true;
+                const rect = canvas.getBoundingClientRect();
+                physics.current.view.lmx = e.clientX - rect.left;
+                physics.current.view.lmy = e.clientY - rect.top;
+            } else if (e.button === 0) {
+                onShoot();
+            }
         };
 
-        // Context Menu prevent
+        const onMouseUp = () => { if(physics.current) physics.current.view.isDragging = false; };
+        const onMouseMove = (e) => interactions?.handleMouseMove(e, onAngleChange);
+        const onWheel = (e) => interactions?.handleWheel(e);
         const onContextMenu = (e) => e.preventDefault();
+        const onTouchStart = (e) => { if(e.cancelable) e.preventDefault(); interactions?.handleTouchStart(e); };
+        const onTouchMove = (e) => { if(e.cancelable) e.preventDefault(); interactions?.handleTouchMove(e, onAngleChange); };
+        const onTouchEnd = (e) => { interactions?.handleTouchEnd(e); };
 
         canvas.addEventListener('mousedown', onMouseDown);
-        window.addEventListener('mousemove', onMouseMove);
         window.addEventListener('mouseup', onMouseUp);
+        canvas.addEventListener('mousemove', onMouseMove);
         canvas.addEventListener('wheel', onWheel, { passive: false });
         canvas.addEventListener('contextmenu', onContextMenu);
+        canvas.addEventListener('touchstart', onTouchStart, { passive: false });
+        canvas.addEventListener('touchmove', onTouchMove, { passive: false });
+        canvas.addEventListener('touchend', onTouchEnd);
 
         return () => {
+            ro.disconnect();
             canvas.removeEventListener('mousedown', onMouseDown);
-            window.removeEventListener('mousemove', onMouseMove);
             window.removeEventListener('mouseup', onMouseUp);
+            canvas.removeEventListener('mousemove', onMouseMove);
             canvas.removeEventListener('wheel', onWheel);
             canvas.removeEventListener('contextmenu', onContextMenu);
+            canvas.removeEventListener('touchstart', onTouchStart);
+            canvas.removeEventListener('touchmove', onTouchMove);
+            canvas.removeEventListener('touchend', onTouchEnd);
         };
-    }, [canvasRef, physics, draw]);
+    }, [canvasRef, draw, interactions, physics, onAngleChange, onShoot]);
 
     return (
-        <div className="flex-1 relative overflow-hidden rounded-xl shadow-2xl h-[400px] md:h-auto">
+        <div ref={containerRef} className="absolute inset-0 w-full h-full overflow-hidden bg-slate-200 cursor-move">
             <canvas 
                 ref={canvasRef}
-                width={800} height={600}
-                className="w-full h-full bg-white cursor-grab active:cursor-grabbing touch-none block"
+                className="block w-full h-full touch-none"
             />
-            <div className="absolute bottom-4 left-1/2 -translate-x-1/2 bg-black/75 text-white px-4 py-1.5 rounded-full text-xs pointer-events-none whitespace-nowrap hidden md:block">
-                🖱️ <b>Klik Kiri:</b> Tembak (di Panel) | 🖐️ <b>Klik Kanan:</b> Geser Kamera | 🔍 <b>Scroll:</b> Zoom
+            <div className="absolute top-20 left-1/2 -translate-x-1/2 bg-white/70 backdrop-blur-sm px-4 py-1.5 rounded-full text-[10px] md:text-xs font-bold text-slate-500 pointer-events-none border border-white/50 shadow-sm flex gap-4 select-none z-0">
+                <span className="hidden md:inline">🖱️ Kiri: Tembak</span>
+                <span className="hidden md:inline">🖐️ Kanan: Geser</span>
+                <span className="md:hidden">👆 1 Jari: Geser</span>
+                <span className="md:hidden">✌️ 2 Jari: Zoom</span>
             </div>
         </div>
     );
