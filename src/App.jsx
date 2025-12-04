@@ -1,5 +1,5 @@
 import React, { useState, useCallback, useEffect } from 'react';
-import InputPanel from './components/inputPanel';
+import InputPanel from './components/InputPanel';
 import OutputPanel from './components/OutputPanel';
 import Canvas from './components/Canvas';
 import { useSimulation } from './hooks/useSimulation';
