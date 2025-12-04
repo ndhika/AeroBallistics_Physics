@@ -2,15 +2,15 @@ import React from 'react';
 
 export default function OutputPanel({ liveData, historyData, activeParams, onClose }) {
     return (
-        <div className="bg-white/90 backdrop-blur-md rounded-xl shadow-lg border border-white/50 overflow-hidden flex flex-col ring-1 ring-black/5">
-            <div className="flex justify-between items-center px-3 py-2 border-b border-gray-100/50 bg-linear-to-b from-white to-gray-50/50">
+        <div className="bg-white/90 backdrop-blur-md rounded-xl shadow-lg border border-white/50 overflow-hidden flex flex-col ring-1 ring-black/5 w-full max-h-[80vh]">            
+            <div className="flex-none justify-between items-center px-3 py-2 border-b border-gray-100/50 bg-linear-to-b from-white to-gray-50/50">
                 <h3 className="text-slate-700 font-bold text-[10px] flex items-center gap-1.5 uppercase tracking-wide">
                     📊 Data
                 </h3>
                 <button onClick={onClose} className="w-4 h-4 flex items-center justify-center rounded-full bg-gray-100 text-gray-400 hover:bg-red-50 hover:text-red-500 transition-colors text-[9px]">✕</button>
             </div>
 
-            <div className="p-2 overflow-y-auto custom-scrollbar space-y-4">
+            <div className="flex-1 p-2 overflow-y-auto custom-scrollbar space-y-4">
                 <div>
                     <h4 className="text-[9px] font-extrabold text-red-500 uppercase mb-2 tracking-widest flex items-center gap-1.5">
                         <span className="relative flex h-1.5 w-1.5"><span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span><span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-red-500"></span></span>

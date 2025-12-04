@@ -22,10 +22,19 @@ useEffect(() => {
 const [showSetup, setShowSetup] = useState(true);
 const [showData, setShowData] = useState(false); 
 
+// Sanitasi params agar physics engine tidak menerima string kosong
+const sanitizeParams = (p) => {
+    const clean = { ...p };
+    ['x0', 'y0', 'v0', 'ang', 'm', 'k', 'g'].forEach(k => {
+        if (clean[k] === '') clean[k] = 0;
+    });
+    return clean;
+};
+
 const handleParamChange = useCallback((newParams) => {
     setUiParams(newParams);
     if(!liveData.isRunning && physics.current) {
-        updatePhysicsParams(newParams);
+        updatePhysicsParams(sanitizeParams(newParams));
         draw();
     }
 }, [liveData.isRunning, draw, updatePhysicsParams, physics]);
@@ -36,7 +45,7 @@ const handleAngleChange = useCallback((newAngle) => {
 
 const handleShoot = useCallback(() => {
     if(!liveData.isRunning) {
-        startSimulation(uiParams);
+        startSimulation(sanitizeParams(uiParams));
     }
 }, [liveData.isRunning, uiParams, startSimulation]);
 

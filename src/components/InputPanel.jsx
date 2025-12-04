@@ -1,5 +1,3 @@
-import { useEffect } from 'react';
-
 function InputGroup({ label, name, val, onChange, ...props }) {
     return (
         <div className="flex-1 min-w-0">
@@ -16,7 +14,7 @@ function InputGroup({ label, name, val, onChange, ...props }) {
 export default function InputPanel({ params, onStart, onReset, isRunning, onParamChange, onClose }) {
     const handleChange = (e) => {
         const { name, value, type, checked } = e.target;
-        let val = type === 'checkbox' ? checked : parseFloat(value);
+        let val = type === 'checkbox' ? checked : (value === '' ? '' : parseFloat(value));
         let newParams = { ...params, [name]: val };
 
         if (name === 'gravityPreset') {
@@ -28,10 +26,13 @@ export default function InputPanel({ params, onStart, onReset, isRunning, onPara
         onParamChange(newParams);
     };
 
-    useEffect(() => { onParamChange(params); }, [params, onParamChange]);
-
-    const handleStart = () => { onStart({ ...params, k: params.dragOn ? params.k : 0 }); };
-
+    const handleStart = () => { 
+        const safeParams = { ...params };
+        Object.keys(safeParams).forEach(key => {
+            if (safeParams[key] === '') safeParams[key] = 0;
+        });
+        onStart({ ...safeParams, k: safeParams.dragOn ? safeParams.k : 0 }); 
+    };
     return (
         <div className="bg-white/90 backdrop-blur-md rounded-xl shadow-lg border border-white/50 overflow-hidden flex flex-col ring-1 ring-black/5">
             <div className="flex justify-between items-center px-3 py-2 border-b border-gray-100/50 bg-linear-to-b from-white to-gray-50/50">
