@@ -65,7 +65,7 @@ return (
                 <div className="bg-white/80 backdrop-blur-md px-3 py-1.5 rounded-full shadow-sm border border-white/40 pointer-events-auto flex items-center gap-2">
                     <span className="text-sm">🚀</span>
                     <h1 className="font-bold text-slate-700 text-xs tracking-wide">
-                        Aero<span className="text-blue-600">Ballistics</span>
+                        Aero<span className="text-blue-600">Ballistics by Dhika</span>
                     </h1>
                 </div>
                 
