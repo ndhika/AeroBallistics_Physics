@@ -15,8 +15,18 @@ export default function InputPanel({ params, onStart, onReset, isRunning, onPara
     const handleChange = (e) => {
         const { name, value, type, checked } = e.target;
         let val = type === 'checkbox' ? checked : (value === '' ? '' : parseFloat(value));
+        if (typeof val === 'number') {
+            if (name === 'x0' || name === 'y0') {
+                // Do nothing (pass)
+            } 
+            else if (name === 'm') {
+                if (val <= 0) val = 0.1;
+            } 
+            else {
+                if (val < 0) val = 0;
+            }
+        }
         let newParams = { ...params, [name]: val };
-
         if (name === 'gravityPreset') {
             if (value !== 'custom') newParams = { ...newParams, gravityPreset: value, g: parseFloat(value) };
             else newParams = { ...newParams, gravityPreset: 'custom' };
@@ -57,7 +67,7 @@ export default function InputPanel({ params, onStart, onReset, isRunning, onPara
                         <div className="flex-1 min-w-0">
                             <label className="block text-[9px] font-bold text-gray-400 mb-0.5 uppercase truncate">Hambatan k</label>
                             <input 
-                                type="number" name="k" value={params.k} onChange={handleChange} step="0.001" disabled={!params.dragOn}
+                                type="number" name="k" value={params.k} onChange={handleChange} step="0.001" min="0" disabled={!params.dragOn}
                                 className={`w-full px-2 py-1 border rounded-md text-[11px] font-bold transition-colors ${!params.dragOn ? 'bg-gray-100 text-gray-300 border-transparent' : 'bg-white border-blue-200 text-gray-700'}`}
                             />
                         </div>

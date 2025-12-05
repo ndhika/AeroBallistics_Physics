@@ -578,8 +578,11 @@ export function useSimulation() {
             p.params = { ...p.params, ...params }; 
             p.angleDeg = params.ang;
         }
-        p.mass = p.params.m; p.g = p.params.g; p.k = p.params.dragOn ? p.params.k : 0;
+        p.mass = p.params.m;
+        p.g = p.params.g;
+        p.k = p.params.dragOn ? Math.max(0, p.params.k) : 0;
         p.ballAngle = 0; 
+
         let rad = p.angleDeg * Math.PI / 180;
         p.x = p.params.x0; p.y = p.params.y0; p.t = 0; p.maxHeight = p.params.y0;
         p.vx = p.params.v0 * Math.cos(rad); p.vy = p.params.v0 * Math.sin(rad);
@@ -589,6 +592,9 @@ export function useSimulation() {
     };
 
     const updatePhysicsParams = (newParams) => {
+        const safeParams = { ...newParams };
+        if (safeParams.k < 0) safeParams.k = 0;
+        
         physics.current.params = { ...newParams };
         physics.current.angleDeg = newParams.ang;
     };
