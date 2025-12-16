@@ -11,7 +11,7 @@ const {
 } = useSimulation();
 
 const [uiParams, setUiParams] = useState({
-    x0: 0, y0: 0, v0: 50, ang: 45, m: 1.0, k: 0, g: 9.8, dragOn: false, gravityPreset: "9.8"
+    x0: 0, y0: 0, v0: 50, ang: 45, m: 1.0, k: 0, g: 9.8, dragOn: false, gravityPreset: "9.8", slope: 0
 });
 
 useEffect(() => {
@@ -49,10 +49,33 @@ const handleShoot = useCallback(() => {
     }
 }, [liveData.isRunning, uiParams, startSimulation]);
 
-const handleReset = () => {
-    resetSimulation();
-    setUiParams(prev => ({ ...prev, ang: 45 }));
-};
+    const handleReset = () => {
+        // 1. Definisikan Settingan Awal
+        const defaultValues = {
+            x0: 0, 
+            y0: 0, 
+            v0: 50, 
+            ang: 45, 
+            m: 1.0, 
+            k: 0, 
+            g: 9.8, 
+            dragOn: false, 
+            gravityPreset: "9.8",
+            slope: 0
+        };
+
+        // 2. Reset Engine
+        resetSimulation();
+
+        // 3. Reset UI
+        setUiParams(defaultValues);
+
+        // 4. Paksa Update Fisika (LANGSUNG PANGGIL FUNGSINYA)
+        // CEGAH ERROR: Cek dulu apakah fungsinya ada
+        if (typeof updatePhysicsParams === 'function') {
+            updatePhysicsParams(defaultValues);
+        }
+    };
 
 return (
     <div className="fixed inset-0 w-full h-full bg-slate-100 overflow-hidden font-sans text-slate-800">

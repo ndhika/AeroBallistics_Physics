@@ -1,22 +1,41 @@
-import React from 'react';
-
 export default function OutputPanel({ liveData, historyData, activeParams, onClose }) {
+    const slopeDeg = activeParams?.slope || 0;
+    const slopeRad = slopeDeg * Math.PI / 180;
+    
+    // === LIVE DATA CALCULATIONS ===
+    const liveX = liveData.x || 0;
+    const liveY = liveData.y || 0;
+    
+    // Tinggi tanah di posisi X saat ini
+    const liveGroundY = liveX * Math.tan(slopeRad);
+    
+    // Jarak miring (slant distance) dari origin
+    const liveSlant = Math.abs(liveX / Math.cos(slopeRad));
+    
+    // Ketinggian bola DARI TANAH (bukan dari origin)
+    const liveHeightAboveGround = liveY - liveGroundY;
+
     return (
-    <div className="bg-white/90 backdrop-blur-md rounded-xl shadow-lg border border-white/50 overflow-hidden flex flex-col ring-1 ring-black/5 w-full max-h-[calc(70vh-60px)]">            
-        <div className="flex justify-between items-center px-3 py-2 border-b border-gray-100/50 bg-linear-to-b from-white to-gray-50/50">
+        <div className="bg-white/90 backdrop-blur-md rounded-xl shadow-lg border border-white/50 overflow-hidden flex flex-col ring-1 ring-black/5 w-full max-h-[calc(70vh-60px)]">            
+            <div className="flex justify-between items-center px-3 py-2 border-b border-gray-100/50 bg-gradient-to-b from-white to-gray-50/50">
                 <h3 className="text-slate-700 font-bold text-[10px] flex items-center gap-1.5 uppercase tracking-wide">
                     📊 Data
                 </h3>
                 <button onClick={onClose} className="w-4 h-4 flex items-center justify-center rounded-full bg-gray-100 text-gray-400 hover:bg-red-50 hover:text-red-500 transition-colors text-[9px]">✕</button>
             </div>
-
+            
             <div className="p-2 overflow-y-auto custom-scrollbar space-y-4">
+                {/* ========== LIVE DATA (AKTIF) ========== */}
                 <div>
                     <h4 className="text-[9px] font-extrabold text-red-500 uppercase mb-2 tracking-widest flex items-center gap-1.5">
-                        <span className="relative flex h-1.5 w-1.5"><span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span><span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-red-500"></span></span>
-                        Aktif
+                        <span className="relative flex h-1.5 w-1.5">
+                            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
+                            <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-red-500"></span>
+                        </span>
+                        {liveData.isRunning ? 'Running' : 'Current'}
                     </h4>
                     
+                    {/* Parameter Badges */}
                     <div className="grid grid-cols-2 gap-1.5 mb-2">
                         <Badge label="Posisi" val={`${activeParams?.x0},${activeParams?.y0}`} />
                         <Badge label="Velo" val={activeParams?.v0} />
@@ -24,23 +43,81 @@ export default function OutputPanel({ liveData, historyData, activeParams, onClo
                         <Badge label="Massa" val={activeParams?.m} />
                         <Badge label="Drag" val={activeParams?.dragOn ? activeParams?.k : 'Off'} />
                         <Badge label="Grav" val={activeParams?.g} />
+                        <Badge label="Elevasi" val={(activeParams?.slope || 0) + '°'} />
                     </div>
-
-                    <div className="space-y-1.5">
-                        <ResultRow label="Waktu" value={liveData.t.toFixed(2)} unit="s" color="red" />
-                        <ResultRow label="Jarak" value={Math.abs(liveData.x - (activeParams?.x0||0)).toFixed(2)} unit="m" color="red" />
-                        <ResultRow label="Tinggi" value={liveData.hMax.toFixed(2)} unit="m" color="red" />
+                    
+                    {/* Results */}
+                    <div className="space-y-1">
+                        <ResultRow label="⏱ Waktu Terbang" value={liveData.t.toFixed(2)} unit="s" color="red" />
+                        
+                        <div className="grid grid-cols-2 gap-2">
+                            <ResultRow 
+                                label="📏 Jarak Datar (X)" 
+                                value={liveX.toFixed(2)} 
+                                unit="m" 
+                                color="red" 
+                            />
+                            <ResultRow 
+                                label="📐 Jarak Miring (R)" 
+                                value={liveSlant.toFixed(2)} 
+                                unit="m" 
+                                color="red" 
+                            />
+                        </div>
+                        
+                        <div className="grid grid-cols-2 gap-2">
+                            <ResultRow 
+                                label="⛰ Puncak Max" 
+                                value={liveData.hMax.toFixed(2)} 
+                                unit="m" 
+                                color="red" 
+                                smallLabel 
+                            />
+                            <ResultRow 
+                                label="🎯 Tinggi Saat Ini" 
+                                value={liveY.toFixed(2)} 
+                                unit="m" 
+                                color="red" 
+                                smallLabel 
+                            />                        
+                        </div>
+                        
+                        {/* Info Box untuk Elevasi */}
+                        {slopeDeg !== 0 && (
+                            <div className="bg-amber-50 border border-amber-200 rounded-lg p-2 mt-2">
+                                <div className="text-[8px] font-bold text-amber-700 mb-1 flex items-center gap-1">
+                                    ⚠️ TERRAIN INFO
+                                </div>
+                                <div className="grid grid-cols-2 gap-2 text-[9px]">
+                                    <div>
+                                        <span className="text-amber-600 font-semibold">Elevasi Tanah:</span>
+                                        <span className="ml-1 font-mono font-bold text-amber-800">
+                                            {liveGroundY.toFixed(2)}m
+                                        </span>
+                                    </div>
+                                    <div>
+                                        <span className="text-amber-600 font-semibold">Di Atas Tanah:</span>
+                                        <span className="ml-1 font-mono font-bold text-amber-800">
+                                            {liveHeightAboveGround.toFixed(2)}m
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
                     </div>
                 </div>
+                
                 <div className="border-t border-dashed border-slate-200"></div>
-                {/* HISTORY */}
+                
+                {/* ========== HISTORY DATA (LAST RUN) ========== */}
                 <div className={`transition-all duration-300 ${liveData.isRunning ? 'opacity-50 grayscale' : 'opacity-100'}`}>
                     <h4 className="text-[9px] font-extrabold text-blue-500 uppercase mb-2 tracking-widest flex items-center gap-1.5">
-                        <span className="h-1.5 w-1.5 rounded-full bg-blue-500"></span> Last
+                        <span className="h-1.5 w-1.5 rounded-full bg-blue-500"></span> Last Run
                     </h4>
-
+                    
                     {historyData ? (
                         <>
+                            {/* Parameter Badges */}
                             <div className="grid grid-cols-2 gap-1.5 mb-2">
                                 <Badge label="Posisi" val={`${historyData.params.x0},${historyData.params.y0}`} />
                                 <Badge label="Velo" val={historyData.params.v0} />
@@ -48,15 +125,58 @@ export default function OutputPanel({ liveData, historyData, activeParams, onClo
                                 <Badge label="Massa" val={historyData.params.m} />
                                 <Badge label="Drag" val={historyData.params.dragOn ? historyData.params.k : 'Off'} />
                                 <Badge label="Grav" val={historyData.params.g} />
+                                <Badge label="Elevasi" val={(historyData.params.slope || 0) + '°'} />
                             </div>
-                            <div className="space-y-1.5">
-                                <ResultRow label="Waktu" value={historyData.t} unit="s" color="blue" />
-                                <ResultRow label="Jarak" value={historyData.dist} unit="m" color="blue" />
-                                <ResultRow label="Tinggi" value={historyData.height} unit="m" color="blue" />
+                            
+                            {/* Results */}
+                            <div className="space-y-1">
+                                <ResultRow 
+                                    label="⏱ Waktu Terbang" 
+                                    value={historyData.t} 
+                                    unit="s" 
+                                    color="blue" 
+                                />
+                                
+                                <div className="grid grid-cols-2 gap-2">
+                                    <ResultRow 
+                                        label="📏 Jarak Datar (X)" 
+                                        value={historyData.dist} 
+                                        unit="m" 
+                                        color="blue" 
+                                    />
+                                    <ResultRow 
+                                        label="📐 Jarak Miring (R)" 
+                                        value={historyData.slant || '-'} 
+                                        unit="m" 
+                                        color="blue" 
+                                    />
+                                </div>
+                                
+                                <div className="grid grid-cols-2 gap-2">
+                                    <ResultRow 
+                                        label="⛰ Puncak Max" 
+                                        value={historyData.height} 
+                                        unit="m" 
+                                        color="blue" 
+                                    />
+                                    <ResultRow 
+                                        label="🎯 Tinggi Akhir (Y)" 
+                                        value={historyData.impactY || '-'} 
+                                        unit="m" 
+                                        color="blue" 
+                                    />
+                                </div>
+                                
+                                {/* Comparison Alert */}
+                                {!liveData.isRunning && (
+                                    <ComparisonInfo liveData={liveData} historyData={historyData} />
+                                )}
                             </div>
                         </>
                     ) : (
-                        <div className="text-center py-4 text-[9px] text-slate-400 bg-slate-50 rounded border border-dashed border-slate-200">No Data</div>
+                        <div className="text-center py-4 text-[9px] text-slate-400 bg-slate-50 rounded border border-dashed border-slate-200">
+                            Tidak ada data sebelumnya
+                        </div>
                     )}
                 </div>
             </div>
@@ -64,22 +184,84 @@ export default function OutputPanel({ liveData, historyData, activeParams, onClo
     );
 }
 
-function Badge({ label, val }) {
+// === COMPARISON INFO COMPONENT ===
+function ComparisonInfo({ liveData, historyData }) {
+    const xDiff = Math.abs(liveData.x - parseFloat(historyData.dist));
+    const tDiff = Math.abs(liveData.t - parseFloat(historyData.t));
+    const hDiff = Math.abs(liveData.hMax - parseFloat(historyData.height));
+    
+    // Threshold: jika beda > 0.5m atau 0.1s, tampilkan
+    const showComparison = xDiff > 0.5 || tDiff > 0.1 || hDiff > 0.5;
+    
+    if (!showComparison) {
+        return (
+            <div className="bg-green-50 border border-green-200 rounded-lg p-2 mt-2">
+                <div className="text-[8px] font-bold text-green-700 flex items-center gap-1">
+                    ✅ Data sama dengan run sebelumnya
+                </div>
+            </div>
+        );
+    }
+    
     return (
-        <div className="bg-slate-50 px-1.5 py-1 rounded border border-slate-100 flex flex-col justify-center min-w-0">
-            <span className="text-[8px] text-slate-400 font-bold uppercase tracking-wide truncate">{label}</span>
-            <span className="text-[10px] font-bold text-slate-700 truncate">{val}</span>
+        <div className="bg-blue-50 border border-blue-200 rounded-lg p-2 mt-2">
+            <div className="text-[8px] font-bold text-blue-700 mb-1">📊 Perbandingan</div>
+            <div className="space-y-0.5 text-[8px]">
+                {xDiff > 0.5 && (
+                    <div className="flex justify-between">
+                        <span className="text-blue-600">Δ Jarak:</span>
+                        <span className="font-mono font-bold text-blue-800">{xDiff.toFixed(2)}m</span>
+                    </div>
+                )}
+                {tDiff > 0.1 && (
+                    <div className="flex justify-between">
+                        <span className="text-blue-600">Δ Waktu:</span>
+                        <span className="font-mono font-bold text-blue-800">{tDiff.toFixed(2)}s</span>
+                    </div>
+                )}
+                {hDiff > 0.5 && (
+                    <div className="flex justify-between">
+                        <span className="text-blue-600">Δ Puncak:</span>
+                        <span className="font-mono font-bold text-blue-800">{hDiff.toFixed(2)}m</span>
+                    </div>
+                )}
+            </div>
         </div>
     );
 }
 
-function ResultRow({ label, value, unit, color }) {
+// === BADGE COMPONENT ===
+function Badge({ label, val }) {
+    return (
+        <div className="bg-slate-50 px-1.5 py-1 rounded border border-slate-100 flex flex-col justify-center min-w-0">
+            <span className="text-[8px] text-slate-400 font-bold uppercase tracking-wide truncate">
+                {label}
+            </span>
+            <span className="text-[10px] font-bold text-slate-700 truncate">
+                {val}
+            </span>
+        </div>
+    );
+}
+
+// === RESULT ROW COMPONENT ===
+function ResultRow({ label, value, unit, color, smallLabel }) {
     const isRed = color === 'red';
     return (
-        <div className={`flex justify-between items-center px-2 py-1.5 rounded-lg border-l-2 shadow-sm bg-white ${isRed ? 'border-red-500' : 'border-blue-500'}`}>
-            <span className="text-[8px] font-bold text-slate-500 uppercase tracking-wide">{label}</span>
+        <div className={`flex justify-between items-center px-2 py-1.5 rounded-lg border-l-2 shadow-sm bg-white ${
+            isRed ? 'border-red-500' : 'border-blue-500'
+        }`}>
+            <span className={`font-bold text-slate-500 uppercase tracking-wide ${
+                smallLabel ? 'text-[7px]' : 'text-[8px]'
+            }`}>
+                {label}
+            </span>
             <div className="flex items-baseline gap-0.5">
-                <span className={`text-sm font-mono font-bold ${isRed ? 'text-red-600' : 'text-blue-600'}`}>{value}</span>
+                <span className={`text-sm font-mono font-bold ${
+                    isRed ? 'text-red-600' : 'text-blue-600'
+                }`}>
+                    {value}
+                </span>
                 <span className="text-[8px] text-slate-400 font-bold">{unit}</span>
             </div>
         </div>

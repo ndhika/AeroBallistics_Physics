@@ -5,7 +5,8 @@ function InputGroup({ label, name, val, onChange, ...props }) {
             <input 
                 type="number" name={name} value={val} onChange={onChange}
                 className="w-full px-2 py-1 bg-gray-50 border border-gray-200 rounded-md text-[11px] font-bold text-gray-700 focus:bg-white focus:border-blue-500 outline-none transition-all"
-                {...props}
+                onWheel={(e) => e.target.blur()} 
+                {...props} 
             />
         </div>
     );
@@ -14,32 +15,74 @@ function InputGroup({ label, name, val, onChange, ...props }) {
 export default function InputPanel({ params, onStart, onReset, isRunning, onParamChange, onClose }) {
     const handleChange = (e) => {
         const { name, value, type, checked } = e.target;
-        let val = type === 'checkbox' ? checked : (value === '' ? '' : parseFloat(value));
-        if (typeof val === 'number') {
-            if (name === 'x0' || name === 'y0') {
-                // Do nothing (pass)
-            } 
-            else if (name === 'm') {
-                if (val <= 0) val = 0.1;
-            } 
-            else {
-                if (val < 0) val = 0;
+        if (type === 'checkbox') {
+            let newParams = { ...params, [name]: checked };
+            if (name === 'dragOn' && checked === true && params.k === 0) {
+                newParams.k = 0.05;
+            }
+            onParamChange(newParams);
+            return;
+        }
+        let val = parseFloat(value);
+        let safeVal = isNaN(val) ? 0 : val; 
+        if (name === 'm' && safeVal <= 0) safeVal = 0.1;
+        if ((name === 'v0' || name === 'k' || name === 'g') && safeVal < 0) safeVal = 0;
+        if (name === 'slope') {
+            if (safeVal < -80) safeVal = -80;
+            if (safeVal > 80) safeVal = 80;
+        }
+        let finalValue = (value === '' || value === '-') ? value : safeVal;
+        if (name === 'slope' && (val < -80 || val > 80)) finalValue = safeVal;
+        let newParams = { ...params, [name]: finalValue };
+        // Logic Auto-Climb (Naik Gunung)
+        if (name === 'x0' || name === 'slope') {
+            const currentX = name === 'x0' ? safeVal : (parseFloat(params.x0) || 0);
+            const currentSlope = name === 'slope' ? safeVal : (parseFloat(params.slope) || 0);
+            const groundHeight = currentX * Math.tan(currentSlope * Math.PI / 180);
+            newParams.y0 = parseFloat(groundHeight.toFixed(2));
+        }
+        // Preset Gravitasi
+        if (name === 'gravityPreset') {
+            if (value !== 'custom') {
+                newParams.gravityPreset = value;
+                newParams.g = parseFloat(value);
+            } else {
+                newParams.gravityPreset = 'custom';
             }
         }
-        let newParams = { ...params, [name]: val };
-        if (name === 'gravityPreset') {
-            if (value !== 'custom') newParams = { ...newParams, gravityPreset: value, g: parseFloat(value) };
-            else newParams = { ...newParams, gravityPreset: 'custom' };
-        } else {
-            if (name === 'dragOn' && val === true && params.k === 0) newParams.k = 0.05; 
-        }
+
         onParamChange(newParams);
+    };
+
+    // Fungsi ini jalan saat user(selesai edit)
+    const handleBlur = (e) => {
+        const { name, value } = e.target;
+        let val = parseFloat(value) || 0;
+        // 1. Validasi Sudut (Angle) -> WAJIB 0-360
+        if (name === 'ang') {
+            // Rumus matematika untuk memaksa angka selalu 0-360
+            let normalizedAngle = val % 360;
+            // Handle angka minus (misal -10 jadi 350)
+            if (normalizedAngle < 0) normalizedAngle += 360;
+            // Cek Tabrakan Gunung
+            const minAngle = parseFloat(params.slope) || 0;
+            if (normalizedAngle < minAngle) {
+                normalizedAngle = minAngle; 
+            }
+            // Update UI jadi angka yang sudah rapi
+            onParamChange({ ...params, ang: parseFloat(normalizedAngle.toFixed(2)) });
+            return; 
+        }
+        // 2. Validasi Input Kosong
+        if (value === '' || value === '-') {
+            onParamChange({ ...params, [name]: 0 });
+        }
     };
 
     const handleStart = () => { 
         const safeParams = { ...params };
         Object.keys(safeParams).forEach(key => {
-            if (safeParams[key] === '') safeParams[key] = 0;
+            if (safeParams[key] === '' || safeParams[key] === '-') safeParams[key] = 0;
         });
         onStart({ ...safeParams, k: safeParams.dragOn ? safeParams.k : 0 }); 
     };
@@ -51,27 +94,42 @@ export default function InputPanel({ params, onStart, onReset, isRunning, onPara
                 </h3>
                 <button onClick={onClose} className="w-4 h-4 flex items-center justify-center rounded-full bg-gray-100 text-gray-400 hover:bg-red-50 hover:text-red-500 transition-colors text-[9px]">✕</button>
             </div>
+            
             <div className="flex-1 p-2 overflow-y-auto custom-scrollbar space-y-2">
-                
                 <div className="flex gap-2">
-                    <InputGroup label="X₀ (m)" name="x0" val={params.x0} onChange={handleChange} />
-                    <InputGroup label="Y₀ (m)" name="y0" val={params.y0} onChange={handleChange} />
+                    <InputGroup label="X₀ (m)" name="x0" val={params.x0} onChange={handleChange} onBlur={handleBlur} />
+                    <InputGroup label="Y₀ (m)" name="y0" val={params.y0} onChange={handleChange} onBlur={handleBlur} />
                 </div>
                 <div className="flex gap-2">
-                    <InputGroup label="Velo (m/s)" name="v0" val={params.v0} onChange={handleChange} />
-                    <InputGroup label="Angle (°)" name="ang" val={params.ang} onChange={handleChange} />
+                    <InputGroup label="Velo (m/s)" name="v0" val={params.v0} onChange={handleChange} onBlur={handleBlur} />
+                    <InputGroup label="Angle (°)" name="ang" val={params.ang} onChange={handleChange} onBlur={handleBlur} />
                 </div>
                 <div className="bg-slate-50/80 p-2 rounded-lg border border-slate-100 space-y-2">
                     <div className="flex gap-2">
-                        <InputGroup label="Massa (kg)" name="m" val={params.m} onChange={handleChange} min="0.1" />
+                        <InputGroup label="Massa (kg)" name="m" val={params.m} onChange={handleChange} onBlur={handleBlur} min="0.1" />
                         <div className="flex-1 min-w-0">
                             <label className="block text-[9px] font-bold text-gray-400 mb-0.5 uppercase truncate">Hambatan k</label>
                             <input 
-                                type="number" name="k" value={params.k} onChange={handleChange} step="0.001" min="0" disabled={!params.dragOn}
+                                type="number" name="k" value={params.k} 
+                                onChange={handleChange} 
+                                onBlur={handleBlur} 
+                                step="0.001" min="0" disabled={!params.dragOn}
                                 className={`w-full px-2 py-1 border rounded-md text-[11px] font-bold transition-colors ${!params.dragOn ? 'bg-gray-100 text-gray-300 border-transparent' : 'bg-white border-blue-200 text-gray-700'}`}
                             />
                         </div>
+                        <div className="w-20">
+                            <label className="block text-[9px] font-bold text-gray-400 mb-0.5 uppercase">Elevasi (°)</label>
+                            <input 
+                                type="number" name="slope" 
+                                value={params.slope || 0} 
+                                onChange={handleChange}
+                                onBlur={handleBlur} 
+                                min="-80" max="80"
+                                className="w-full px-2 py-1 bg-gray-50 border border-gray-200 rounded-md text-[11px] font-bold text-gray-700 focus:bg-white focus:border-blue-500 outline-none"
+                            />
+                        </div>
                     </div>
+                    
                     <label className="flex items-center gap-2 cursor-pointer pt-0.5">
                         <input type="checkbox" name="dragOn" checked={params.dragOn} onChange={handleChange} className="w-3 h-3 accent-blue-600 rounded" />
                         <span className="text-[9px] font-bold text-slate-500">Aktifkan Hambatan Udara</span>
@@ -88,7 +146,12 @@ export default function InputPanel({ params, onStart, onReset, isRunning, onPara
                             <option value="custom">✏️ Custom</option>
                         </select>
                         {params.gravityPreset === 'custom' && (
-                            <input type="number" name="g" value={params.g} onChange={handleChange} step="0.1" className="w-12 px-1 py-1 border border-blue-200 rounded-md text-[10px] font-bold text-center" />
+                            <input 
+                                type="number" name="g" value={params.g} 
+                                onChange={handleChange} 
+                                onBlur={handleBlur} 
+                                step="0.1" className="w-12 px-1 py-1 border border-blue-200 rounded-md text-[10px] font-bold text-center" 
+                            />
                         )}
                     </div>
                 </div>
