@@ -10,7 +10,13 @@ export function useSimulation() {
     const physics = useRef({
         // Physics Vars
         x: 0, y: 0, vx: 0, vy: 0, t: 0,
-        mass: 1, k: 0, g: 9.8, dt: 0.02, ballAngle: 0,
+        mass: 1, k: 0, g: 9.8, 
+        
+        // --- UBAH DISINI: MODE PRESISI TINGGI ---
+        dt: 0.005, // (Sebelumnya 0.02) - Langkah lebih kecil = Akurasi Tinggi
+        // ----------------------------------------
+
+        ballAngle: 0,
         angleDeg: 45,
         maxHeight: 0,
         trajectory: [],
@@ -525,17 +531,22 @@ export function useSimulation() {
         handleTouchEnd    
     };
 
-    // --- PHYSICS LOOP (Sama seperti sebelumnya) ---
+    // --- PHYSICS LOOP ---
     const updatePhysics = () => {
         const p = physics.current;
+        
         let v = Math.sqrt(p.vx*p.vx + p.vy*p.vy);
-        let F = p.k * v * v;
+        let F = p.k * v * v; 
         let ax = -(F * (p.vx/v)) / p.mass;
         let ay = -p.g - (F * (p.vy/v)) / p.mass;
         if(v === 0 || isNaN(v)) { ax = 0; ay = -p.g; }
         
-        p.vx += ax * p.dt; p.vy += ay * p.dt;
-        p.x += p.vx * p.dt; p.y += p.vy * p.dt; p.t += p.dt;
+        //  rumus: S = v*t + 0.5*a*t^2
+        p.x += p.vx * p.dt + 0.5 * ax * p.dt * p.dt;
+        p.y += p.vy * p.dt + 0.5 * ay * p.dt * p.dt;
+        p.vx += ax * p.dt;
+        p.vy += ay * p.dt;
+        p.t += p.dt;
         p.ballAngle += (v * p.dt) * 0.5; 
 
         if (p.y > p.maxHeight) p.maxHeight = p.y;
@@ -544,16 +555,33 @@ export function useSimulation() {
 
     const animate = () => {
         const p = physics.current;
-        const speedMultiplier = 2; 
+        const speedMultiplier = 10; 
 
         for(let i=0; i < speedMultiplier; i++) { 
+            const prevX = p.x;
+            const prevY = p.y;
+            const prevT = p.t;
+
             updatePhysics();
+            
             if(p.y <= 0 && p.vy < 0) {
+                const fraction = (0 - prevY) / (p.y - prevY); 
+                
+                p.x = prevX + (p.x - prevX) * fraction;
+                p.t = prevT + (p.t - prevT) * fraction;
                 p.y = 0;
-                setLiveData(prev => ({ ...prev, isRunning: false, t: p.t, x: p.x, y: 0, hMax: p.maxHeight }));
+                
+                setLiveData(prev => ({ 
+                    ...prev, 
+                    isRunning: false, 
+                    t: p.t, 
+                    x: p.x, 
+                    y: 0, 
+                    hMax: p.maxHeight 
+                }));
                 cancelAnimationFrame(requestRef.current);
                 draw();
-                return;
+                return; 
             }
         }
         draw();
