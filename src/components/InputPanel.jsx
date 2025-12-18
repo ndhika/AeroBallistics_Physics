@@ -15,6 +15,8 @@ function InputGroup({ label, name, val, onChange, ...props }) {
 export default function InputPanel({ params, onStart, onReset, isRunning, onParamChange, onClose }) {
     const handleChange = (e) => {
         const { name, value, type, checked } = e.target;
+        
+        // 1. Handle Checkbox
         if (type === 'checkbox') {
             let newParams = { ...params, [name]: checked };
             if (name === 'dragOn' && checked === true && params.k === 0) {
@@ -23,25 +25,41 @@ export default function InputPanel({ params, onStart, onReset, isRunning, onPara
             onParamChange(newParams);
             return;
         }
+
+        // 2. Handle Angka
         let val = parseFloat(value);
         let safeVal = isNaN(val) ? 0 : val; 
+
+        // --- VALIDASI BATAS ---
+        // A. Batas Positif (Massa, Velo, Drag, Gravitasi) -> Gak boleh minus
         if (name === 'm' && safeVal <= 0) safeVal = 0.1;
         if ((name === 'v0' || name === 'k' || name === 'g') && safeVal < 0) safeVal = 0;
+        
+        // B. Khusus Gunung/Elevasi: Batasi -80 s/d 80
         if (name === 'slope') {
-            if (safeVal < -80) safeVal = -80;
+            if (safeVal < -80) safeVal = -80; // Tambahkan ini biar aman
             if (safeVal > 80) safeVal = 80;
         }
+
+        // --- MENYIMPAN NILAI ---
+        // Izinkan ketik tanda minus '-' atau kosong ''
         let finalValue = (value === '' || value === '-') ? value : safeVal;
-        if (name === 'slope' && (val < -80 || val > 80)) finalValue = safeVal;
+
+        // Update State
         let newParams = { ...params, [name]: finalValue };
-        // Logic Auto-Climb (Naik Gunung)
+
+        
+        // 1. Auto-Climb (Naik Gunung/Turun Parit)
+        // Kalau slope negatif, y0 otomatis jadi negatif (masuk tanah/parit)
         if (name === 'x0' || name === 'slope') {
             const currentX = name === 'x0' ? safeVal : (parseFloat(params.x0) || 0);
             const currentSlope = name === 'slope' ? safeVal : (parseFloat(params.slope) || 0);
+            
             const groundHeight = currentX * Math.tan(currentSlope * Math.PI / 180);
             newParams.y0 = parseFloat(groundHeight.toFixed(2));
         }
-        // Preset Gravitasi
+
+        // 2. Preset Gravitasi
         if (name === 'gravityPreset') {
             if (value !== 'custom') {
                 newParams.gravityPreset = value;
@@ -74,7 +92,7 @@ export default function InputPanel({ params, onStart, onReset, isRunning, onPara
             return; 
         }
         // 2. Validasi Input Kosong
-        if (value === '' || value === '-') {
+        if (value === '') {
             onParamChange({ ...params, [name]: 0 });
         }
     };
@@ -82,7 +100,7 @@ export default function InputPanel({ params, onStart, onReset, isRunning, onPara
     const handleStart = () => { 
         const safeParams = { ...params };
         Object.keys(safeParams).forEach(key => {
-            if (safeParams[key] === '' || safeParams[key] === '-') safeParams[key] = 0;
+            if (safeParams[key] === '') safeParams[key] = 0;
         });
         onStart({ ...safeParams, k: safeParams.dragOn ? safeParams.k : 0 }); 
     };
@@ -121,7 +139,7 @@ export default function InputPanel({ params, onStart, onReset, isRunning, onPara
                             <label className="block text-[9px] font-bold text-gray-400 mb-0.5 uppercase">Elevasi (°)</label>
                             <input 
                                 type="number" name="slope" 
-                                value={params.slope || 0} 
+                                value={params.slope} 
                                 onChange={handleChange}
                                 onBlur={handleBlur} 
                                 min="-80" max="80"

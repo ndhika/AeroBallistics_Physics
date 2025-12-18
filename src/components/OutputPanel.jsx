@@ -2,22 +2,18 @@ export default function OutputPanel({ liveData, historyData, activeParams, onClo
     const slopeDeg = activeParams?.slope || 0;
     const slopeRad = slopeDeg * Math.PI / 180;
     
-    // === LIVE DATA CALCULATIONS ===
     const liveX = liveData.x || 0;
     const liveY = liveData.y || 0;
     
-    // Tinggi tanah di posisi X saat ini
     const liveGroundY = liveX * Math.tan(slopeRad);
     
-    // Jarak miring (slant distance) dari origin
     const liveSlant = Math.abs(liveX / Math.cos(slopeRad));
     
-    // Ketinggian bola DARI TANAH (bukan dari origin)
     const liveHeightAboveGround = liveY - liveGroundY;
 
     return (
         <div className="bg-white/90 backdrop-blur-md rounded-xl shadow-lg border border-white/50 overflow-hidden flex flex-col ring-1 ring-black/5 w-full max-h-[calc(70vh-60px)]">            
-            <div className="flex justify-between items-center px-3 py-2 border-b border-gray-100/50 bg-gradient-to-b from-white to-gray-50/50">
+            <div className="flex justify-between items-center px-3 py-2 border-b border-gray-100/50 bg-linear-to-b from-white to-gray-50/50">
                 <h3 className="text-slate-700 font-bold text-[10px] flex items-center gap-1.5 uppercase tracking-wide">
                     📊 Data
                 </h3>
@@ -34,8 +30,6 @@ export default function OutputPanel({ liveData, historyData, activeParams, onClo
                         </span>
                         {liveData.isRunning ? 'Running' : 'Current'}
                     </h4>
-                    
-                    {/* Parameter Badges */}
                     <div className="grid grid-cols-2 gap-1.5 mb-2">
                         <Badge label="Posisi" val={`${activeParams?.x0},${activeParams?.y0}`} />
                         <Badge label="Velo" val={activeParams?.v0} />
@@ -45,8 +39,6 @@ export default function OutputPanel({ liveData, historyData, activeParams, onClo
                         <Badge label="Grav" val={activeParams?.g} />
                         <Badge label="Elevasi" val={(activeParams?.slope || 0) + '°'} />
                     </div>
-                    
-                    {/* Results */}
                     <div className="space-y-1">
                         <ResultRow label="⏱ Waktu Terbang" value={liveData.t.toFixed(2)} unit="s" color="red" />
                         
@@ -82,7 +74,6 @@ export default function OutputPanel({ liveData, historyData, activeParams, onClo
                             />                        
                         </div>
                         
-                        {/* Info Box untuk Elevasi */}
                         {slopeDeg !== 0 && (
                             <div className="bg-amber-50 border border-amber-200 rounded-lg p-2 mt-2">
                                 <div className="text-[8px] font-bold text-amber-700 mb-1 flex items-center gap-1">
@@ -117,7 +108,6 @@ export default function OutputPanel({ liveData, historyData, activeParams, onClo
                     
                     {historyData ? (
                         <>
-                            {/* Parameter Badges */}
                             <div className="grid grid-cols-2 gap-1.5 mb-2">
                                 <Badge label="Posisi" val={`${historyData.params.x0},${historyData.params.y0}`} />
                                 <Badge label="Velo" val={historyData.params.v0} />
@@ -127,8 +117,6 @@ export default function OutputPanel({ liveData, historyData, activeParams, onClo
                                 <Badge label="Grav" val={historyData.params.g} />
                                 <Badge label="Elevasi" val={(historyData.params.slope || 0) + '°'} />
                             </div>
-                            
-                            {/* Results */}
                             <div className="space-y-1">
                                 <ResultRow 
                                     label="⏱ Waktu Terbang" 
@@ -136,7 +124,6 @@ export default function OutputPanel({ liveData, historyData, activeParams, onClo
                                     unit="s" 
                                     color="blue" 
                                 />
-                                
                                 <div className="grid grid-cols-2 gap-2">
                                     <ResultRow 
                                         label="📏 Jarak Datar (X)" 
@@ -151,7 +138,6 @@ export default function OutputPanel({ liveData, historyData, activeParams, onClo
                                         color="blue" 
                                     />
                                 </div>
-                                
                                 <div className="grid grid-cols-2 gap-2">
                                     <ResultRow 
                                         label="⛰ Puncak Max" 
@@ -166,8 +152,6 @@ export default function OutputPanel({ liveData, historyData, activeParams, onClo
                                         color="blue" 
                                     />
                                 </div>
-                                
-                                {/* Comparison Alert */}
                                 {!liveData.isRunning && (
                                     <ComparisonInfo liveData={liveData} historyData={historyData} />
                                 )}
@@ -186,11 +170,14 @@ export default function OutputPanel({ liveData, historyData, activeParams, onClo
 
 // === COMPARISON INFO COMPONENT ===
 function ComparisonInfo({ liveData, historyData }) {
-    const xDiff = Math.abs(liveData.x - parseFloat(historyData.dist));
-    const tDiff = Math.abs(liveData.t - parseFloat(historyData.t));
-    const hDiff = Math.abs(liveData.hMax - parseFloat(historyData.height));
+    const histDist = typeof historyData.dist === 'string' ? parseFloat(historyData.dist) : historyData.dist;
+    const histT = typeof historyData.t === 'string' ? parseFloat(historyData.t) : historyData.t;
+    const histHeight = typeof historyData.height === 'string' ? parseFloat(historyData.height) : historyData.height;
     
-    // Threshold: jika beda > 0.5m atau 0.1s, tampilkan
+    const xDiff = Math.abs(liveData.x - histDist);
+    const tDiff = Math.abs(liveData.t - histT);
+    const hDiff = Math.abs(liveData.hMax - histHeight);
+    
     const showComparison = xDiff > 0.5 || tDiff > 0.1 || hDiff > 0.5;
     
     if (!showComparison) {
@@ -230,7 +217,6 @@ function ComparisonInfo({ liveData, historyData }) {
     );
 }
 
-// === BADGE COMPONENT ===
 function Badge({ label, val }) {
     return (
         <div className="bg-slate-50 px-1.5 py-1 rounded border border-slate-100 flex flex-col justify-center min-w-0">
@@ -245,8 +231,12 @@ function Badge({ label, val }) {
 }
 
 // === RESULT ROW COMPONENT ===
-function ResultRow({ label, value, unit, color, smallLabel }) {
+function ResultRow({ label, value, unit, color, smallLabel, precision = 2 }) {
     const isRed = color === 'red';
+    
+    const numValue = typeof value === 'string' ? parseFloat(value) : value;
+    const displayValue = isNaN(numValue) ? value : numValue.toFixed(precision);
+    
     return (
         <div className={`flex justify-between items-center px-2 py-1.5 rounded-lg border-l-2 shadow-sm bg-white ${
             isRed ? 'border-red-500' : 'border-blue-500'
@@ -260,7 +250,7 @@ function ResultRow({ label, value, unit, color, smallLabel }) {
                 <span className={`text-sm font-mono font-bold ${
                     isRed ? 'text-red-600' : 'text-blue-600'
                 }`}>
-                    {value}
+                    {displayValue}
                 </span>
                 <span className="text-[8px] text-slate-400 font-bold">{unit}</span>
             </div>

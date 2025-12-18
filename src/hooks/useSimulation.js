@@ -6,15 +6,14 @@ export function useSimulation() {
     const [liveData, setLiveData] = useState({ isRunning: false, t: 0, x: 0, y: 0, hMax: 0 });
     const [history, setHistory] = useState(null);
     
-    // Physics Engine - IMPROVED FOR MAXIMUM ACCURACY
+    // Physics Engine 
     const physics = useRef({
         x: 0, y: 0, vx: 0, vy: 0, t: 0,
         mass: 1, k: 0, g: 9.8, 
         
-        // ADAPTIVE TIMESTEP PARAMETERS
-        dt: 0.001,          
+        dt: 0.001,           
         minDt: 0.0001,       
-        maxDt: 0.005,        
+        maxDt: 0.005,       
         targetError: 0.001,  
         
         ballAngle: 0,
@@ -40,7 +39,6 @@ export function useSimulation() {
     const computeAcceleration = (vx, vy, p) => {
         const v = Math.sqrt(vx*vx + vy*vy);
         
-        // Hindari division by zero
         if (v < 1e-10) {
             return { ax: 0, ay: -p.g };
         }
@@ -649,12 +647,10 @@ export function useSimulation() {
                     p.vx = p.vx * (1 - safeFraction);
                     p.vy = p.vy * (1 - safeFraction);
                     
-                    // ✅ FINAL SNAP: Force Y exactly to ground surface
                     // This eliminates the small gap due to interpolation error
                     const exactGroundY = p.x * tanSlope;
                     p.y = exactGroundY;
                     
-                    // ✅ BONUS: Zero out velocity component perpendicular to slope
                     // This simulates perfect inelastic collision with ground
                     const nx = -Math.sin(slopeRad);
                     const ny = Math.cos(slopeRad);
@@ -686,12 +682,13 @@ export function useSimulation() {
             const dataToSave = p.runParams && Object.keys(p.runParams).length > 0 ? p.runParams : p.params;
             const slopeRad = (dataToSave.slope || 0) * Math.PI / 180;
             const slantDistFromZero = Math.abs(p.x / Math.cos(slopeRad));
+            
             setHistory({
-                t: p.t.toFixed(2),
-                dist: p.x.toFixed(2),
-                slant: slantDistFromZero.toFixed(2),
-                height: p.maxHeight.toFixed(2),
-                impactY: p.y.toFixed(2),                       
+                t: p.t,                    
+                dist: p.x,                 
+                slant: slantDistFromZero,  
+                height: p.maxHeight,       
+                impactY: p.y,             
                 params: { ...dataToSave } 
             });
         }
