@@ -102,14 +102,12 @@ export function useSimulation() {
         const accel = Math.sqrt(p.g*p.g + (p.k * v * v / p.mass)**2);
         
         // Timestep based on velocity and acceleration
-        // dt = sqrt(2 * error / accel)
         let newDt = p.dt;
         
         if (accel > 0) {
             newDt = Math.sqrt(2 * p.targetError / accel);
         }
         
-        // Clamp between min and max
         newDt = Math.max(p.minDt, Math.min(p.maxDt, newDt));
         
         // Adjust based on velocity too (smaller timestep for high speed)
@@ -590,11 +588,7 @@ export function useSimulation() {
     // --- IMPROVED PHYSICS LOOP WITH RK4 AND ADAPTIVE TIMESTEP ---
     const updatePhysics = () => {
         const p = physics.current;
-        
-        // Use adaptive timestep
         const dt = adaptiveTimestep(p);
-        
-        // Use RK4 integration
         const result = rk4Step(p.x, p.y, p.vx, p.vy, dt, p);
         
         p.x = result.x;
@@ -607,14 +601,18 @@ export function useSimulation() {
         const v = Math.sqrt(p.vx*p.vx + p.vy*p.vy);
         p.ballAngle += (v * dt) * 0.5; 
 
-        if (p.y > p.maxHeight) p.maxHeight = p.y;
+        const heightFromStart = p.y - p.params.y0;
+        
+        if (heightFromStart > p.maxHeight) {
+            p.maxHeight = heightFromStart;
+        }
         p.trajectory.push({x: p.x, y: p.y});
     };
 
     const animate = () => {
         const p = physics.current;
-        const speedMultiplier = 10; 
 
+        const speedMultiplier = 10; 
         const slopeRad = (p.params.slope || 0) * Math.PI / 180;
         const tanSlope = Math.tan(slopeRad);
 
@@ -664,6 +662,8 @@ export function useSimulation() {
                 setLiveData(prev => ({ 
                     ...prev, isRunning: false, t: p.t, x: p.x, y: p.y, hMax: p.maxHeight 
                 }));
+                console.log('🏁 Final H_max:', p.maxHeight.toFixed(2));
+
                 cancelAnimationFrame(requestRef.current);
                 draw();
                 return;
@@ -678,16 +678,18 @@ export function useSimulation() {
     const startSimulation = (params) => {
         const p = physics.current;
         
+        // Save history
         if (p.t > 0 && p.trajectory.length > 0) {
             const dataToSave = p.runParams && Object.keys(p.runParams).length > 0 ? p.runParams : p.params;
-            const slopeRad = (dataToSave.slope || 0) * Math.PI / 180;
-            const slantDistFromZero = Math.abs(p.x / Math.cos(slopeRad));
+            const dx = p.x - (dataToSave.x0 || 0);
+            const dy = p.y - (dataToSave.y0 || 0);
+            const slantDistance = Math.sqrt(dx * dx + dy * dy);
             
             setHistory({
                 t: p.t,                    
                 dist: p.x,                 
-                slant: slantDistFromZero,  
-                height: p.maxHeight,       
+                slant: slantDistance,  
+                height: p.maxHeight,
                 impactY: p.y,             
                 params: { ...dataToSave } 
             });
@@ -706,10 +708,16 @@ export function useSimulation() {
         p.ballAngle = 0; 
 
         let rad = p.angleDeg * Math.PI / 180;
-        p.x = p.params.x0; p.y = p.params.y0; p.t = 0; p.maxHeight = p.params.y0;
-        p.vx = p.params.v0 * Math.cos(rad); p.vy = p.params.v0 * Math.sin(rad);
+        p.x = p.params.x0; 
+        p.y = p.params.y0; 
+        p.t = 0; 
+        p.vx = p.params.v0 * Math.cos(rad); 
+        p.vy = p.params.v0 * Math.sin(rad);
         p.trajectory = [{x: p.x, y: p.y}];
-        setLiveData({ isRunning: true, t: 0, x: p.x, y: p.y, hMax: p.y });
+        
+        p.maxHeight = 0;
+        
+        setLiveData({ isRunning: true, t: 0, x: p.x, y: p.y, hMax: p.params.y0 });
         animate();
     };
 

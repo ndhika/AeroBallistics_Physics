@@ -4,12 +4,15 @@ export default function OutputPanel({ liveData, historyData, activeParams, onClo
     
     const liveX = liveData.x || 0;
     const liveY = liveData.y || 0;
+    const x0 = activeParams?.x0 || 0;
+    const y0 = activeParams?.y0 || 0;
     
+    const dx = liveX - x0;
+    const dy = liveY - y0;
+    const liveSlant = Math.sqrt(dx * dx + dy * dy);
+
     const liveGroundY = liveX * Math.tan(slopeRad);
-    
-    const liveSlant = Math.abs(liveX / Math.cos(slopeRad));
-    
-    const liveHeightAboveGround = liveY - liveGroundY;
+    const liveHeightAboveGround = (liveY - liveGroundY) * Math.cos(slopeRad);
 
     return (
         <div className="bg-white/90 backdrop-blur-md rounded-xl shadow-lg border border-white/50 overflow-hidden flex flex-col ring-1 ring-black/5 w-full max-h-[calc(70vh-60px)]">            
@@ -21,7 +24,6 @@ export default function OutputPanel({ liveData, historyData, activeParams, onClo
             </div>
             
             <div className="p-2 overflow-y-auto custom-scrollbar space-y-4">
-                {/* ========== LIVE DATA (AKTIF) ========== */}
                 <div>
                     <h4 className="text-[9px] font-extrabold text-red-500 uppercase mb-2 tracking-widest flex items-center gap-1.5">
                         <span className="relative flex h-1.5 w-1.5">
@@ -59,7 +61,7 @@ export default function OutputPanel({ liveData, historyData, activeParams, onClo
                         
                         <div className="grid grid-cols-2 gap-2">
                             <ResultRow 
-                                label="⛰ Puncak Max" 
+                                label="⛰ Puncak (Y)" 
                                 value={liveData.hMax.toFixed(2)} 
                                 unit="m" 
                                 color="red" 
@@ -75,32 +77,33 @@ export default function OutputPanel({ liveData, historyData, activeParams, onClo
                         </div>
                         
                         {slopeDeg !== 0 && (
-                            <div className="bg-amber-50 border border-amber-200 rounded-lg p-2 mt-2">
-                                <div className="text-[8px] font-bold text-amber-700 mb-1 flex items-center gap-1">
-                                    ⚠️ TERRAIN INFO
-                                </div>
-                                <div className="grid grid-cols-2 gap-2 text-[9px]">
-                                    <div>
-                                        <span className="text-amber-600 font-semibold">Elevasi Tanah:</span>
-                                        <span className="ml-1 font-mono font-bold text-amber-800">
-                                            {liveGroundY.toFixed(2)}m
-                                        </span>
+                            <>
+                                <div className="bg-amber-50 border border-amber-200 rounded-lg p-2 mt-2">
+                                    <div className="text-[9px] font-bold text-amber-700 mb-1 flex items-center gap-1">
+                                        ⚠️ TERRAIN INFO
                                     </div>
-                                    <div>
-                                        <span className="text-amber-600 font-semibold">Di Atas Tanah:</span>
-                                        <span className="ml-1 font-mono font-bold text-amber-800">
-                                            {liveHeightAboveGround.toFixed(2)}m
-                                        </span>
+                                    <div className="grid grid-cols-2 gap-2 text-[9px]">
+                                        <div>
+                                            <span className="text-amber-600 font-semibold">Elevasi Tanah:</span>
+                                            <span className="ml-1 font-mono font-bold text-amber-800">
+                                                {liveGroundY.toFixed(2)}m
+                                            </span>
+                                        </div>
+                                        <div>
+                                            <span className="text-amber-600 font-semibold">Tinggi ⊥ Bidang:</span>
+                                            <span className="ml-1 font-mono font-bold text-amber-800">
+                                                {liveHeightAboveGround.toFixed(2)}m
+                                            </span>
+                                        </div>
                                     </div>
                                 </div>
-                            </div>
+                            </>
                         )}
                     </div>
                 </div>
                 
                 <div className="border-t border-dashed border-slate-200"></div>
                 
-                {/* ========== HISTORY DATA (LAST RUN) ========== */}
                 <div className={`transition-all duration-300 ${liveData.isRunning ? 'opacity-50 grayscale' : 'opacity-100'}`}>
                     <h4 className="text-[9px] font-extrabold text-blue-500 uppercase mb-2 tracking-widest flex items-center gap-1.5">
                         <span className="h-1.5 w-1.5 rounded-full bg-blue-500"></span> Last Run
@@ -140,7 +143,7 @@ export default function OutputPanel({ liveData, historyData, activeParams, onClo
                                 </div>
                                 <div className="grid grid-cols-2 gap-2">
                                     <ResultRow 
-                                        label="⛰ Puncak Max" 
+                                        label="⛰ Puncak (Y)" 
                                         value={historyData.height} 
                                         unit="m" 
                                         color="blue" 
@@ -168,7 +171,6 @@ export default function OutputPanel({ liveData, historyData, activeParams, onClo
     );
 }
 
-// === COMPARISON INFO COMPONENT ===
 function ComparisonInfo({ liveData, historyData }) {
     const histDist = typeof historyData.dist === 'string' ? parseFloat(historyData.dist) : historyData.dist;
     const histT = typeof historyData.t === 'string' ? parseFloat(historyData.t) : historyData.t;
@@ -193,7 +195,7 @@ function ComparisonInfo({ liveData, historyData }) {
     return (
         <div className="bg-blue-50 border border-blue-200 rounded-lg p-2 mt-2">
             <div className="text-[8px] font-bold text-blue-700 mb-1">📊 Perbandingan</div>
-            <div className="space-y-0.5 text-[8px]">
+            <div className="space-y-0.5 text-[9px]">
                 {xDiff > 0.5 && (
                     <div className="flex justify-between">
                         <span className="text-blue-600">Δ Jarak:</span>
@@ -230,7 +232,6 @@ function Badge({ label, val }) {
     );
 }
 
-// === RESULT ROW COMPONENT ===
 function ResultRow({ label, value, unit, color, smallLabel, precision = 2 }) {
     const isRed = color === 'red';
     
