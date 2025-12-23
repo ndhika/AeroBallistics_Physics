@@ -85,7 +85,7 @@ return (
         <div className="hidden landscape:block w-full h-full relative">
             <header className="absolute top-2 left-2 right-2 h-10 z-40 flex justify-between items-center pointer-events-none">
                 <div className="bg-white/80 backdrop-blur-md px-3 py-1.5 rounded-full shadow-sm border border-white/40 pointer-events-auto flex items-center gap-2">
-                    <a href="https://github.com/ndhika" className="">
+                    <a href="https://github.com/ndhika/AeroBallistics_Physics" className="">
                         <h1 className="font-bold text-slate-700 text-xs tracking-wide">
                             <span className="text-sm">🚀</span>
                             Aero<span className="text-blue-600">Ballistics</span><i className="text-orange-400"> by Dhika</i>
