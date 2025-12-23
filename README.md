@@ -7,8 +7,6 @@
 
 **AeroBallistics** adalah simulator fisika proyektil presisi tinggi berbasis web. Proyek ini mengimplementasikan metode numerik canggih untuk memvisualisasikan gerak benda di bawah pengaruh gravitasi, hambatan udara (*drag*), dan topografi miring secara real-time.
 
-🌐 **Live Demo:** [https://aero-ballistics-physics.vercel.app/](https://aero-ballistics-physics.vercel.app/)
-
 ---
 
 ## ✨ Fitur Unggulan (Core Capabilities)
@@ -34,7 +32,7 @@ Berdasarkan *engine* yang dibangun, berikut adalah kemampuan utama sistem ini:
 
 ## 📐 Di Balik Layar: Model Matematika
 
-Simulasi ini berjalan di atas loop fisika kustom (`useSimulation.js`) yang menangani perhitungan berikut:
+Simulasi ini menangani perhitungan berikut:
 
 ### Metode Integrasi Numerik (RK4)
 Posisi dan kecepatan dihitung menggunakan rata-rata terbobot dari 4 kemiringan (slopes):
@@ -55,17 +53,6 @@ Diimplementasikan dalam kode sebagai `F = k * v * v`.
 
 ### Deteksi Tumbukan (Collision)
 Saat proyektil menyentuh tanah, engine melakukan **Sub-step Linear Interpolation** untuk menemukan titik pendaratan yang tepat, mencegah bola terlihat "tenggelam" ke dalam garis tanah miring.
-
----
-
-## 🕹️ Kontrol Penggunaan
-
-| Aksi | Input Mouse / Keyboard | Input Touch (HP/Tablet) |
-| :--- | :--- | :--- |
-| **Aiming** | Gerakkan Mouse | - |
-| **Zoom** | Scroll Wheel | Pinch (Cubit Layar) |
-| **Pan (Geser)** | Klik Tahan & Geser | Drag 1 Jari |
-| **Reset** | Tombol UI | Tombol UI |
 
 ---
 
@@ -97,7 +84,7 @@ Pastikan Anda memiliki [Node.js](https://nodejs.org/) terinstall.
 
 ## 🤝 Kontribusi
 
-Kode inti simulasi berada di hook `useSimulation`. Jika Anda ingin menambahkan fitur seperti:
+Jika Anda ingin menambahkan fitur seperti:
 * Efek Magnus (Spin pada bola).
 * Angin dinamis (Wind vector).
 * Material proyektil yang berbeda.
