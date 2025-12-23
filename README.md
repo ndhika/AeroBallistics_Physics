@@ -3,7 +3,7 @@
 ![React](https://img.shields.io/badge/React-20232A?style=for-the-badge&logo=react&logoColor=61DAFB)
 ![Canvas API](https://img.shields.io/badge/Canvas_API-orange?style=for-the-badge&logo=html5)
 ![Physics](https://img.shields.io/badge/Physics-RK4_Integrator-blueviolet?style=for-the-badge)
-![License](https://img.shields.io/badge/License-MIT-green?style=for-the-badge)
+
 
 **AeroBallistics** adalah simulator fisika proyektil presisi tinggi berbasis web. Proyek ini mengimplementasikan metode numerik canggih untuk memvisualisasikan gerak benda di bawah pengaruh gravitasi, hambatan udara (*drag*), dan topografi miring secara real-time.
 
