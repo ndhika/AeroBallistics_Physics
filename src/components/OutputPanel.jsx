@@ -13,6 +13,7 @@ export default function OutputPanel({ liveData, historyData, activeParams, onClo
 
     const liveGroundY = liveX * Math.tan(slopeRad);
     const liveHeightAboveGround = (liveY - liveGroundY) * Math.cos(slopeRad);
+    
 
     return (
         <div className="bg-white/90 backdrop-blur-md rounded-xl shadow-lg border border-white/50 overflow-hidden flex flex-col ring-1 ring-black/5 w-full max-h-[calc(70vh-60px)]">            
@@ -61,7 +62,7 @@ export default function OutputPanel({ liveData, historyData, activeParams, onClo
                         
                         <div className="grid grid-cols-2 gap-2">
                             <ResultRow 
-                                label="⛰ Puncak (Y)" 
+                                label="⛰ Puncak Max (Y)" 
                                 value={liveData.hMax.toFixed(2)} 
                                 unit="m" 
                                 color="red" 
@@ -69,35 +70,32 @@ export default function OutputPanel({ liveData, historyData, activeParams, onClo
                             />
                             <ResultRow 
                                 label="🎯 Tinggi Saat Ini" 
-                                value={liveY.toFixed(2)} 
+                                value={liveHeightAboveGround.toFixed(2)} 
                                 unit="m" 
                                 color="red" 
                                 smallLabel 
                             />                        
                         </div>
-                        
                         {slopeDeg !== 0 && (
-                            <>
-                                <div className="bg-amber-50 border border-amber-200 rounded-lg p-2 mt-2">
-                                    <div className="text-[9px] font-bold text-amber-700 mb-1 flex items-center gap-1">
-                                        ⚠️ TERRAIN INFO
+                            <div className="bg-amber-50 border border-amber-200 rounded-lg p-2">
+                                <div className="text-[8px] font-bold text-amber-700 mb-1 flex items-center gap-1">
+                                    ⚠️ TERRAIN INFO
+                                </div>
+                                <div className="grid grid-cols-2 gap-2 text-[9px]">
+                                    <div>
+                                        <span className="text-amber-600 font-semibold">Elevasi Tanah:</span>
+                                        <span className="ml-1 font-mono font-bold text-amber-800">
+                                            {liveGroundY.toFixed(2)}m
+                                        </span>
                                     </div>
-                                    <div className="grid grid-cols-2 gap-2 text-[9px]">
-                                        <div>
-                                            <span className="text-amber-600 font-semibold">Elevasi Tanah:</span>
-                                            <span className="ml-1 font-mono font-bold text-amber-800">
-                                                {liveGroundY.toFixed(2)}m
-                                            </span>
-                                        </div>
-                                        <div>
-                                            <span className="text-amber-600 font-semibold">Tinggi ⊥ Bidang:</span>
-                                            <span className="ml-1 font-mono font-bold text-amber-800">
-                                                {liveHeightAboveGround.toFixed(2)}m
-                                            </span>
-                                        </div>
+                                    <div>
+                                        <span className="text-amber-600 font-semibold">Tinggi Live:</span>
+                                        <span className="ml-1 font-mono font-bold text-amber-800">
+                                            {liveHeightAboveGround.toFixed(2)}m
+                                        </span>
                                     </div>
                                 </div>
-                            </>
+                            </div>
                         )}
                     </div>
                 </div>
@@ -143,13 +141,13 @@ export default function OutputPanel({ liveData, historyData, activeParams, onClo
                                 </div>
                                 <div className="grid grid-cols-2 gap-2">
                                     <ResultRow 
-                                        label="⛰ Puncak (Y)" 
+                                        label="⛰ Tinggi ⊥ Max" 
                                         value={historyData.height} 
                                         unit="m" 
                                         color="blue" 
                                     />
                                     <ResultRow 
-                                        label="🎯 Tinggi Akhir (Y)" 
+                                        label="🎯 Tinggi Akhir" 
                                         value={historyData.impactY || '-'} 
                                         unit="m" 
                                         color="blue" 
@@ -195,7 +193,7 @@ function ComparisonInfo({ liveData, historyData }) {
     return (
         <div className="bg-blue-50 border border-blue-200 rounded-lg p-2 mt-2">
             <div className="text-[8px] font-bold text-blue-700 mb-1">📊 Perbandingan</div>
-            <div className="space-y-0.5 text-[9px]">
+            <div className="space-y-0.5 text-[8px]">
                 {xDiff > 0.5 && (
                     <div className="flex justify-between">
                         <span className="text-blue-600">Δ Jarak:</span>
@@ -210,7 +208,7 @@ function ComparisonInfo({ liveData, historyData }) {
                 )}
                 {hDiff > 0.5 && (
                     <div className="flex justify-between">
-                        <span className="text-blue-600">Δ Puncak:</span>
+                        <span className="text-blue-600">Δ Tinggi ⊥:</span>
                         <span className="font-mono font-bold text-blue-800">{hDiff.toFixed(2)}m</span>
                     </div>
                 )}
