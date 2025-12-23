@@ -50,7 +50,7 @@ const handleShoot = useCallback(() => {
 }, [liveData.isRunning, uiParams, startSimulation]);
 
     const handleReset = () => {
-        // 1. Definisikan Settingan Awal
+        // Definisikan Settingan Awal
         const defaultValues = {
             x0: 0, 
             y0: 0, 
@@ -64,13 +64,12 @@ const handleShoot = useCallback(() => {
             slope: 0
         };
 
-        // 2. Reset Engine
+        // Reset Engine
         resetSimulation();
 
-        // 3. Reset UI
+       // Reset UI
         setUiParams(defaultValues);
 
-        // 4. Paksa Update Fisika (LANGSUNG PANGGIL FUNGSINYA)
         // CEGAH ERROR: Cek dulu apakah fungsinya ada
         if (typeof updatePhysicsParams === 'function') {
             updatePhysicsParams(defaultValues);
@@ -86,10 +85,12 @@ return (
         <div className="hidden landscape:block w-full h-full relative">
             <header className="absolute top-2 left-2 right-2 h-10 z-40 flex justify-between items-center pointer-events-none">
                 <div className="bg-white/80 backdrop-blur-md px-3 py-1.5 rounded-full shadow-sm border border-white/40 pointer-events-auto flex items-center gap-2">
-                    <span className="text-sm">🚀</span>
-                    <h1 className="font-bold text-slate-700 text-xs tracking-wide">
-                        Aero<span className="text-blue-600">Ballistics by Dhika</span>
-                    </h1>
+                    <a href="https://github.com/ndhika" className="">
+                        <h1 className="font-bold text-slate-700 text-xs tracking-wide">
+                            <span className="text-sm">🚀</span>
+                            Aero<span className="text-blue-600">Ballistics</span><i className="text-orange-400"> by Dhika</i>
+                        </h1>
+                    </a>
                 </div>
                 
                 <div className="flex gap-2 pointer-events-auto">

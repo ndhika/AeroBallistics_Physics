@@ -2,17 +2,20 @@ export default function OutputPanel({ liveData, historyData, activeParams, onClo
     const slopeDeg = activeParams?.slope || 0;
     const slopeRad = slopeDeg * Math.PI / 180;
     
-    const liveX = liveData.x || 0;
-    const liveY = liveData.y || 0;
     const x0 = activeParams?.x0 || 0;
     const y0 = activeParams?.y0 || 0;
     
-    const dx = liveX - x0;
-    const dy = liveY - y0;
-    const liveSlant = Math.sqrt(dx * dx + dy * dy);
-
-    const liveGroundY = liveX * Math.tan(slopeRad);
-    const liveHeightAboveGround = (liveY - liveGroundY) * Math.cos(slopeRad);
+    // Current values
+    const currentX = liveData.x || 0;
+    const currentY = liveData.y || 0;
+    
+    const dx = currentX - x0;
+    const dy = currentY - y0;
+    const currentSlant = Math.sqrt(dx * dx + dy * dy);
+    
+    // Ground elevation at current X
+    const groundY = currentX * Math.tan(slopeRad);
+    const heightAboveGround = (currentY - groundY) * Math.cos(slopeRad);
     
 
     return (
@@ -26,9 +29,11 @@ export default function OutputPanel({ liveData, historyData, activeParams, onClo
             
             <div className="p-2 overflow-y-auto custom-scrollbar space-y-4">
                 <div>
-                    <h4 className="text-[9px] font-extrabold text-red-500 uppercase mb-2 tracking-widest flex items-center gap-1.5">
+                    <h4 className="text-[9px] font-extrabold text-red-500 uppercase mb-2 tracking-widest flex items-center gap-1">
                         <span className="relative flex h-1.5 w-1.5">
-                            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
+                            {liveData.isRunning && (
+                                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
+                            )}
                             <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-red-500"></span>
                         </span>
                         {liveData.isRunning ? 'Running' : 'Current'}
@@ -48,13 +53,13 @@ export default function OutputPanel({ liveData, historyData, activeParams, onClo
                         <div className="grid grid-cols-2 gap-2">
                             <ResultRow 
                                 label="📏 Jarak Datar (X)" 
-                                value={liveX.toFixed(2)} 
+                                value={currentX.toFixed(2)} 
                                 unit="m" 
                                 color="red" 
                             />
                             <ResultRow 
                                 label="📐 Jarak Miring (R)" 
-                                value={liveSlant.toFixed(2)} 
+                                value={currentSlant.toFixed(2)} 
                                 unit="m" 
                                 color="red" 
                             />
@@ -69,14 +74,14 @@ export default function OutputPanel({ liveData, historyData, activeParams, onClo
                                 smallLabel 
                             />
                             <ResultRow 
-                                label="🎯 Tinggi Saat Ini" 
-                                value={liveHeightAboveGround.toFixed(2)} 
+                                label="🎯 Tinggi Akhir" 
+                                value={currentY.toFixed(2)} 
                                 unit="m" 
                                 color="red" 
                                 smallLabel 
                             />                        
                         </div>
-                        {slopeDeg !== 0 && (
+                        {slopeDeg !== 0 && liveData.isRunning && heightAboveGround > 0.5 && (
                             <div className="bg-amber-50 border border-amber-200 rounded-lg p-2">
                                 <div className="text-[8px] font-bold text-amber-700 mb-1 flex items-center gap-1">
                                     ⚠️ TERRAIN INFO
@@ -85,13 +90,13 @@ export default function OutputPanel({ liveData, historyData, activeParams, onClo
                                     <div>
                                         <span className="text-amber-600 font-semibold">Elevasi Tanah:</span>
                                         <span className="ml-1 font-mono font-bold text-amber-800">
-                                            {liveGroundY.toFixed(2)}m
+                                            {groundY.toFixed(2)}m
                                         </span>
                                     </div>
                                     <div>
-                                        <span className="text-amber-600 font-semibold">Tinggi Live:</span>
+                                        <span className="text-amber-600 font-semibold">Tinggi ⊥ Tanah:</span>
                                         <span className="ml-1 font-mono font-bold text-amber-800">
-                                            {liveHeightAboveGround.toFixed(2)}m
+                                            {heightAboveGround.toFixed(2)}m
                                         </span>
                                     </div>
                                 </div>

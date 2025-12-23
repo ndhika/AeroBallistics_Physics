@@ -500,13 +500,17 @@ export function useSimulation() {
 
             let finalAngle = rawDeg;
 
+            // LIMIT TO 90 DEGREES MAXIMUM
+            const maxAngle = slope + 90;
+            
             if (relativeAngle < 0) {
-                if (relativeAngle > -90) {
-                    finalAngle = slope;
-                } else {
-                    finalAngle = slope + 180;
-                }
-            } 
+                // Below slope line - snap to slope
+                finalAngle = slope;
+            } else if (relativeAngle > 90) {
+                // Above 90 degrees - clamp to max
+                finalAngle = maxAngle;
+            }
+            
             p.angleDeg = (finalAngle + 360) % 360;
 
             if(onAngleChange) onAngleChange(p.angleDeg);
@@ -701,6 +705,18 @@ export function useSimulation() {
             p.params = { ...p.params, ...params }; 
             p.angleDeg = params.ang;
         }
+        
+        // CLAMP ANGLE TO 90 DEGREES MAX
+        const slope = p.params.slope || 0;
+        const relativeAngle = p.angleDeg - slope;
+        if (relativeAngle < 0) {
+            p.angleDeg = slope;
+            p.params.ang = slope;
+        } else if (relativeAngle > 90) {
+            p.angleDeg = slope + 90;
+            p.params.ang = slope + 90;
+        }
+        
         p.runParams = { ...p.params };
         p.mass = p.params.m;
         p.g = p.params.g;
@@ -725,8 +741,17 @@ export function useSimulation() {
         const safeParams = { ...newParams };
         if (safeParams.k < 0) safeParams.k = 0;
         
-        physics.current.params = { ...newParams };
-        physics.current.angleDeg = newParams.ang;
+        // CLAMP ANGLE TO 90 DEGREES MAX
+        const slope = safeParams.slope || 0;
+        const relativeAngle = safeParams.ang - slope;
+        if (relativeAngle < 0) {
+            safeParams.ang = slope;
+        } else if (relativeAngle > 90) {
+            safeParams.ang = slope + 90;
+        }
+        
+        physics.current.params = { ...safeParams };
+        physics.current.angleDeg = safeParams.ang;
     };
 
     const resetSimulation = () => {
